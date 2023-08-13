@@ -1,0 +1,6 @@
+[ ] Add GameState class.
+[ ] Add way for front-end to retrieve gamestate data and display it.
+[ ] Add database for storing gamestates.
+[ ] Add random player for testing.
+[ ] Test all model classes.
+[ ] Start developing the Multi-Agent Reinforcement Learning player.
