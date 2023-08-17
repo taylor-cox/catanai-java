@@ -1,0 +1,1 @@
+./mvnw spring-boot:run & npm start --prefix ./app
