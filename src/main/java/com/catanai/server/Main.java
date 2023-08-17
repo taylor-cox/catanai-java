@@ -1,6 +1,7 @@
 package com.catanai.server;
 
 import com.catanai.server.model.Game;
+import com.catanai.server.model.board.graph.Node;
 import com.catanai.server.model.gamestate.GameState;
 import com.catanai.server.model.player.DeterministicPlayer;
 import com.catanai.server.model.player.Player;
@@ -10,6 +11,7 @@ import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -20,19 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
  * Main endpoint for Catan AI webviewer.
  */
 @Controller
+@RequestMapping("api/v1")
+@CrossOrigin(origins = "*")
 public class Main {
-  /**
-   * Returns index page.
-   *
-   * @param model ???
-   * @return gamestatew ith one player move
-   */
-  @RequestMapping(path = "/")
-  public String index() {
-    return "index";
-  }
-
-
   /**
    * Returns random game with starting moves determined. TODO: change this.
    *
@@ -41,7 +33,7 @@ public class Main {
    */
   @GetMapping(path = "/randomGame", produces = MediaType.APPLICATION_JSON_VALUE)
   @ResponseBody
-  public GameState randomGame(Model model) {
+  public GameState randomGame() {
     List<Player> players = new ArrayList<Player>(4);
     players.add(new DeterministicPlayer(PlayerId.ONE));
     players.add(new DeterministicPlayer(PlayerId.TWO));
@@ -70,10 +62,12 @@ public class Main {
 
     game.startingTurns();
 
-    // ((DeterministicPlayer) players.get(0)).setNextMoveMetadata(new int[] {1, 1});
-    // game.nextTurn();
-    
-    model.addAttribute("gamestate", game.getCurrentGameState());
     return game.getCurrentGameState();
+  }
+
+  @GetMapping(path = "/nodeEdgeMappings", produces = MediaType.APPLICATION_JSON_VALUE)
+  @ResponseBody
+  public ArrayList<Node> nodeTileMappings() {
+    return null;
   }
 }
