@@ -1,5 +1,7 @@
 package com.catanai.server.model.gamestate;
 
+import ai.djl.ndarray.NDList;
+import ai.djl.ndarray.NDManager;
 import com.catanai.server.model.Game;
 import com.catanai.server.model.bank.ResourceBank;
 import com.catanai.server.model.bank.card.ResourceCard;
@@ -372,6 +374,27 @@ public final class GameState {
   
   public ResourceCard[] getOrderOfCards() {
     return this.orderOfCards;
+  }
+
+  /**
+   * Returns the gamestate as a NDArray.
+   *
+   * @return an nd array representing the state.
+   */
+  public NDList asNDList() {
+    NDList toReturn = new NDList(286);
+    try (NDManager ndManager = NDManager.newBaseManager()) {
+      toReturn.add(ndManager.create(this.tiles));
+      toReturn.add(ndManager.create(this.banks));
+      toReturn.add(ndManager.create(this.playerPerspectiveResourceCards));
+      toReturn.add(ndManager.create(this.edges));
+      toReturn.add(ndManager.create(this.nodes));
+      toReturn.add(ndManager.create(this.ports));
+      toReturn.add(ndManager.create(this.playerMetadata));
+      toReturn.add(ndManager.create(this.lastDiceRollValue));
+    }
+
+    return toReturn;
   }
   
 }
