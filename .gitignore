@@ -35,3 +35,5 @@ build/
 ### NPM ###
 node_modules/
 src/main/java/com/catanai/server/catanai-java.code-workspace
+src/main/java/com/catanai/server/SumCombinations.java
+sum_comb_output.txt
