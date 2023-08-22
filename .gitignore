@@ -34,3 +34,4 @@ build/
 
 ### NPM ###
 node_modules/
+src/main/java/com/catanai/server/catanai-java.code-workspace
