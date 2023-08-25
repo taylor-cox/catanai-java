@@ -120,7 +120,7 @@ public final class ActionExecutor {
   * Private class for returning a settlement and a gamestate from second
   * settlement action in starting turns.
   */
-  private class SettlementGameStatePair {
+  public class SettlementGameStatePair {
     private Settlement settlement;
     private GameState gameState;
     
@@ -179,13 +179,14 @@ public final class ActionExecutor {
   * @param p player settling
   * @return gamestate after the starting settlement is placed.
   */
-  private GameState startingSettlement(Player p, GameState gs) {
+  public GameState startingSettlement(Player p, GameState gs) {
     while (true) {
       int[] actionMetadata = p.play(gs);
       ActionMetadata amd = new ActionMetadata(actionMetadata);
       Action curAction = amd.getAction();
       
       if (curAction != Action.PLAY_SETTLEMENT) {
+        // TODO: Something with player reward function.
         continue;
       }
 
@@ -196,8 +197,10 @@ public final class ActionExecutor {
       );
 
       if (!this.game.getBoard().placeSettlement(attemptedSettlement)) {
+        // TODO: Something with player reward function.
         continue;
       } else {
+        // TODO: Something with player reward function.
         p.setRemainingSettlements(p.getRemainingSettlements() - 1);
         return new GameState(this.game);
       }
@@ -210,13 +213,14 @@ public final class ActionExecutor {
    * @param p player building road
    * @return gamestate after the road is placed.
    */
-  private GameState startingRoad(Player p, GameState gs) {
+  public GameState startingRoad(Player p, GameState gs) {
     while (true) {
       int[] actionMetadata = p.play(gs);
       ActionMetadata amd = new ActionMetadata(actionMetadata);
       Action curAction = amd.getAction();
 
       if (curAction != Action.PLAY_ROAD) {
+        // TODO: Something with player reward function.
         continue;
       }
 
@@ -226,8 +230,10 @@ public final class ActionExecutor {
       );
 
       if (!this.game.getBoard().placeRoad(attemptedRoad)) {
+        // TODO: Something with player reward function.
         continue;
       } else {
+        // TODO: Something with player reward function.
         p.setRemainingRoads(p.getRemainingRoads() - 1);
         return new GameState(this.game);
       }
@@ -242,13 +248,14 @@ public final class ActionExecutor {
    * @param p player settling
    * @return settlement and gamestate after second settlement is placed.
    */
-  private SettlementGameStatePair secondSettlement(Player p, GameState gs) {
+  public SettlementGameStatePair secondSettlement(Player p, GameState gs) {
     while (true) {
       int[] actionMetadata = p.play(gs);
       ActionMetadata amd = new ActionMetadata(actionMetadata);
       Action curAction = amd.getAction();
 
       if (curAction != Action.PLAY_SETTLEMENT) {
+        // TODO: Something with player reward function.
         continue;
       }
 
@@ -258,8 +265,10 @@ public final class ActionExecutor {
           true);
 
       if (!this.game.getBoard().placeSettlement(attemptedSettlement)) {
+        // TODO: Something with player reward function.
         continue;
       } else {
+        // TODO: Something with player reward function.
         ArrayList<Terrain> attemptedSettlementTerrains = this.game.getBoard()
             .getNodes()
             .get(attemptedSettlement.getPlacement())
@@ -285,13 +294,14 @@ public final class ActionExecutor {
    * @param secondSettlement player's second settlement
    * @return gamestate after second road is placed.
    */
-  private GameState secondRoad(Player p, Settlement secondSettlement, GameState gs) {
+  public GameState secondRoad(Player p, Settlement secondSettlement, GameState gs) {
     while (true) {
       int[] actionMetadata = p.play(gs);
       ActionMetadata amd = new ActionMetadata(actionMetadata);
       Action curAction = amd.getAction();
 
       if (curAction != Action.PLAY_ROAD) {
+        // TODO: Something with player reward function.
         continue;
       }
 
@@ -310,8 +320,10 @@ public final class ActionExecutor {
       }
 
       if (!roadNearSecondSettlement || !this.game.getBoard().placeRoad(attemptedRoad)) {
+        // TODO: Something with player reward function.
         continue;
       } else {
+        // TODO: Something with player reward function.
         p.setRemainingRoads(p.getRemainingRoads() - 1);
         return new GameState(this.game);
       }

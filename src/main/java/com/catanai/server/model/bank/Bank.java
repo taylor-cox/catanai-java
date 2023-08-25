@@ -6,7 +6,7 @@ import com.catanai.server.model.bank.card.Card;
 * Represents a card bank.
 */
 public abstract class Bank {
-  protected Card[] cards;
+  // protected Card[] cards;
   protected int max;
   protected int min;
   protected int currentCardIndex = max;

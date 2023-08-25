@@ -20,6 +20,7 @@ import java.util.List;
 * a game at a given turn could be reconstructed with a single gamestate 
 * from a certain player's perspective.
 */
+// public final class GameState implements RlEnv.Step {
 public final class GameState {
   /** The game which this gamestate refers to, i.e. current board state. */
   private Game game;
@@ -314,7 +315,7 @@ public final class GameState {
   * etc... for all 4 players of the game.
   */
   private void populatePlayerMetadata() {
-    List<Player> players = this.game.getPlayers();
+    List<? extends Player> players = this.game.getPlayers();
     for (int i = 0; i < players.size(); i++) {
       Player curPlayer = players.get(i);
       int[] curPlayerMetadata = new int[8];
@@ -373,5 +374,17 @@ public final class GameState {
   public ResourceCard[] getOrderOfCards() {
     return this.orderOfCards;
   }
-  
+
+  public int[][][] toArray() {
+    return new int[][][] {
+      tiles,
+      new int[][] {banks},
+      playerPerspectiveResourceCards,
+      playerFullResourceCards,
+      new int[][] {edges},
+      nodes,
+      new int[][] {ports},
+      playerMetadata
+    };
+  }
 }

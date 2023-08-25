@@ -3,6 +3,7 @@ package com.catanai.server.model.player;
 import com.catanai.server.model.bank.card.DevelopmentCard;
 import com.catanai.server.model.bank.card.ResourceCard;
 import com.catanai.server.model.gamestate.GameState;
+import com.catanai.server.model.player.action.ActionMetadata;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -23,6 +24,8 @@ public abstract class Player {
   protected List<ResourceCard> knownCards;
   protected boolean hasFinishedTurn;
   protected int numKnightsPlayed;
+  protected ArrayList<DevelopmentCard> developmentCardsDrawnThisTurn;
+  protected ActionMetadata previousAction;
   
   /**
    * Initializes all player variables.
@@ -31,6 +34,7 @@ public abstract class Player {
     this.id = id;
     this.resourceCards = new ArrayList<ResourceCard>();
     this.developmentCards = new ArrayList<DevelopmentCard>();
+    this.developmentCardsDrawnThisTurn = new ArrayList<DevelopmentCard>();
     this.remainingSettlements = 5;
     this.remainingCities = 4;
     this.remainingRoads = 15;
@@ -48,6 +52,23 @@ public abstract class Player {
   * @return the action the player chose.
   */
   public abstract int[] play(GameState gameState);
+
+  /**
+   * Reset class to basic values.
+   */
+  public void reset() {
+    this.resourceCards = new ArrayList<ResourceCard>();
+    this.developmentCards = new ArrayList<DevelopmentCard>();
+    this.remainingSettlements = 5;
+    this.remainingCities = 4;
+    this.remainingRoads = 15;
+    this.largestArmy = false;
+    this.longestRoad = false;
+    this.victoryPoints = 0;
+    this.knownCards = new ArrayList<ResourceCard>();
+    this.hasFinishedTurn = false;
+    this.numKnightsPlayed = 0;
+  }
   
   /**
   * Takes all the cards of type rc from the player's hand.
@@ -200,7 +221,7 @@ public abstract class Player {
   }
   
   public void addDevelopmentCard(DevelopmentCard card) {
-    this.developmentCards.add(card);
+    this.developmentCardsDrawnThisTurn.add(card);
   }
   
   public List<DevelopmentCard> getDevelopmentCards() {
@@ -211,8 +232,18 @@ public abstract class Player {
     return this.hasFinishedTurn;
   }
   
+  /**
+   * Sets that the player has finished their turn, and adds all development
+   * cards drawn this turn to the list of possibly playable ones.
+   *
+   * @param hasFinishedTurn what to set hasFinishedTurn to
+   */
   public void setHasFinishedTurn(boolean hasFinishedTurn) {
     this.hasFinishedTurn = hasFinishedTurn;
+    if (hasFinishedTurn) {
+      this.developmentCards.addAll(this.developmentCardsDrawnThisTurn);
+      this.developmentCardsDrawnThisTurn.clear();
+    }
   }
   
   public int getNumKnightsPlayed() {
