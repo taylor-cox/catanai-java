@@ -31,7 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+src/main/java/com/catanai/server/catanai-java.code-workspace
 
 ### NPM ###
 node_modules/
-src/main/java/com/catanai/server/catanai-java.code-workspace
+
+### Python ###
+venv/
