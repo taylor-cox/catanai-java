@@ -17,8 +17,10 @@ import org.junit.Test;
  */
 public class TestGame {
   private Game game;
-  private List<Player> players;
   
+  /**
+   * Setup game for future test cases.
+   */
   @Before
   public void setUp() {
     List<Player> players = new ArrayList<>();

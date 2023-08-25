@@ -30,6 +30,7 @@ public final class ActionExecutor {
   // private Board board;
   // private List<Player> players;
   // private Dealer dealer;
+  // private boolean inStartingTurns;
   private final HashMap<Action, ResourceCard[]> requiredResourcesForAction;
   private final ResourceCard[] orderOfCards = {
     ResourceCard.WOOL,

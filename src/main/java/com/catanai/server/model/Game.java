@@ -48,7 +48,25 @@ public final class Game {
     this.currentGameState = new GameState(this);
     this.gameStates.add(this.currentGameState);
     this.actionExecutor = new ActionExecutor(this);
+    this.currentState = State.START_BUILD;
   }
+
+  // /**
+  //  * Resets the game to initial state.
+  //  */
+  // private void resetHelper() {
+  //   for (Player p : this.players) {
+  //     p.reset();
+  //   }
+  //   this.board = new Board();
+  //   this.dealer = new Dealer();
+  //   this.gameStates = new ArrayList<GameState>();
+  //   this.ended = false;
+  //   this.lastDiceRollValue = 0;
+  //   this.currentGameState = new GameState(this);
+  //   this.gameStates.add(this.currentGameState);
+  //   this.actionExecutor = new ActionExecutor(this);
+  // }
 
   /**
    * Updates the gamestate, and adds it to the list of gamestates.
