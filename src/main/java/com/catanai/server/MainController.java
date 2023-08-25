@@ -26,7 +26,6 @@ public class MainController {
   /**
    * Returns random game with starting moves determined. TODO: change this.
    *
-   * @param model ???
    * @return gamestatew ith one player move
    */
   @GetMapping(path = "/randomGame", produces = MediaType.APPLICATION_JSON_VALUE)
