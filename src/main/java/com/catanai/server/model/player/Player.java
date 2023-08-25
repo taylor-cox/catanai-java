@@ -3,6 +3,7 @@ package com.catanai.server.model.player;
 import com.catanai.server.model.bank.card.DevelopmentCard;
 import com.catanai.server.model.bank.card.ResourceCard;
 import com.catanai.server.model.gamestate.GameState;
+import com.catanai.server.model.player.action.ActionMetadata;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -24,6 +25,7 @@ public abstract class Player {
   protected boolean hasFinishedTurn;
   protected int numKnightsPlayed;
   protected ArrayList<DevelopmentCard> developmentCardsDrawnThisTurn;
+  protected ActionMetadata previousAction;
   
   /**
    * Initializes all player variables.

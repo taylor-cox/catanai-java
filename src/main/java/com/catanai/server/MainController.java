@@ -9,14 +9,17 @@ import com.catanai.server.model.player.PlayerId;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.http.MediaType;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.util.HtmlUtils;
 
 /**
  * Main endpoint for Catan AI webviewer.
@@ -24,11 +27,10 @@ import org.springframework.web.bind.annotation.RestController;
 @Controller
 @RequestMapping("api/v1")
 @CrossOrigin(origins = "*")
-public class Main {
+public class MainController {
   /**
-   * Returns random game with starting moves determined. TODO: change this.
+   * Returns random game with starting moves determined.
    *
-   * @param model ???
    * @return gamestatew ith one player move
    */
   @GetMapping(path = "/randomGame", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -64,6 +66,12 @@ public class Main {
 
     return game.getCurrentGameState();
   }
+
+  // @MessageMapping("/aiWebsocket")
+  // public String aiPlayerCommunication(String communication) {
+  //   System.out.println(communication);
+  //   return null;
+  // }
 
   @GetMapping(path = "/nodeEdgeMappings", produces = MediaType.APPLICATION_JSON_VALUE)
   @ResponseBody

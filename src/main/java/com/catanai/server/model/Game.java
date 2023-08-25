@@ -1,10 +1,5 @@
 package com.catanai.server.model;
 
-import ai.djl.modality.rl.ActionSpace;
-import ai.djl.modality.rl.agent.RlAgent;
-import ai.djl.modality.rl.env.RlEnv;
-import ai.djl.ndarray.NDList;
-
 import com.catanai.server.model.bank.Dealer;
 import com.catanai.server.model.board.Board;
 import com.catanai.server.model.board.building.Settlement;
@@ -23,13 +18,11 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-import org.apache.commons.lang.NotImplementedException;
-
 /**
  * Represents game of Catan.
  */
-public final class Game implements RlEnv {
-  private List<Player> players;
+public final class Game {
+  private List<? extends Player> players;
   private Player currentPlayer;
   private Board board;
   private Dealer dealer;
@@ -50,7 +43,7 @@ public final class Game implements RlEnv {
    *
    * @param players players in a game of Catan.
    */
-  public Game(List<Player> players) {
+  public Game(List<? extends Player> players) {
     this.players = players;
     this.currentPlayer = players.get(0);
     this.board = new Board();
@@ -221,9 +214,7 @@ public final class Game implements RlEnv {
    */
   private void produce(int diceRoll) {
     HashMap<Player, HashMap<Terrain, Integer>> resources = this.getResourcesToProduce(diceRoll);
-
     HashMap<Terrain, Integer> amountToProduce = this.getAmountOfResourcesToProduce(resources);
-
     Set<Terrain> doNotProduce = this.getResourcesUnableToProduce(resources, amountToProduce);
 
     // Give all players resources for the roll
@@ -347,51 +338,10 @@ public final class Game implements RlEnv {
   }
 
   //****************************************************************************
-  //************************* RLEnv Interface Methods **************************
-  //****************************************************************************
-  @Override
-  public void reset() {
-    this.resetHelper();
-  }
-
-  @Override
-  public NDList getObservation() {
-    return this.currentGameState.asNDList();
-  }
-
-  @Override
-  public ActionSpace getActionSpace() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getActionSpace'");
-  }
-
-  @Override
-  public Step step(NDList action, boolean training) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'step'");
-  }
-
-  @Override
-  public Step[] getBatch() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'getBatch'");
-  }
-
-  @Override
-  public void close() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'close'");
-  }
-
-  public float runEnvironment(ArrayList<RlAgent> agents, boolean training) {
-    throw new NotImplementedException("runEnvironment not implement yet.");
-  }
-
-  //****************************************************************************
   //*************************** Getters and Setters ****************************
   //****************************************************************************
 
-  public List<Player> getPlayers() {
+  public List<? extends Player> getPlayers() {
     return this.players;
   }
 
@@ -436,5 +386,9 @@ public final class Game implements RlEnv {
   public boolean startingTurnRoad() {
     return this.currentState == State.START_ROAD 
         || this.currentState == State.START2_ROAD;
+  }
+
+  public void setPlayers(ArrayList<Player> players) {
+    this.players = players;
   }
 }

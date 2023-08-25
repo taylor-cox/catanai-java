@@ -1,7 +1,5 @@
 package com.catanai.server.model.gamestate;
 
-import ai.djl.ndarray.NDList;
-import ai.djl.ndarray.NDManager;
 import com.catanai.server.model.Game;
 import com.catanai.server.model.bank.ResourceBank;
 import com.catanai.server.model.bank.card.ResourceCard;
@@ -22,6 +20,7 @@ import java.util.List;
 * a game at a given turn could be reconstructed with a single gamestate 
 * from a certain player's perspective.
 */
+// public final class GameState implements RlEnv.Step {
 public final class GameState {
   /** The game which this gamestate refers to, i.e. current board state. */
   private Game game;
@@ -316,7 +315,7 @@ public final class GameState {
   * etc... for all 4 players of the game.
   */
   private void populatePlayerMetadata() {
-    List<Player> players = this.game.getPlayers();
+    List<? extends Player> players = this.game.getPlayers();
     for (int i = 0; i < players.size(); i++) {
       Player curPlayer = players.get(i);
       int[] curPlayerMetadata = new int[8];
@@ -376,25 +375,16 @@ public final class GameState {
     return this.orderOfCards;
   }
 
-  /**
-   * Returns the gamestate as a NDArray.
-   *
-   * @return an nd array representing the state.
-   */
-  public NDList asNDList() {
-    NDList toReturn = new NDList(286);
-    try (NDManager ndManager = NDManager.newBaseManager()) {
-      toReturn.add(ndManager.create(this.tiles));
-      toReturn.add(ndManager.create(this.banks));
-      toReturn.add(ndManager.create(this.playerPerspectiveResourceCards));
-      toReturn.add(ndManager.create(this.edges));
-      toReturn.add(ndManager.create(this.nodes));
-      toReturn.add(ndManager.create(this.ports));
-      toReturn.add(ndManager.create(this.playerMetadata));
-      toReturn.add(ndManager.create(this.lastDiceRollValue));
-    }
-
-    return toReturn;
+  public int[][][] toArray() {
+    return new int[][][] {
+      tiles,
+      new int[][] {banks},
+      playerPerspectiveResourceCards,
+      playerFullResourceCards,
+      new int[][] {edges},
+      nodes,
+      new int[][] {ports},
+      playerMetadata
+    };
   }
-  
 }
