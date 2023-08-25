@@ -6,21 +6,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+/**
+ * Server application setup.
+ */
 @SpringBootApplication
 public class ServerApplication {
-	
-	public static void main(String[] args) {
-		SpringApplication.run(ServerApplication.class, args);
-	}
-	
-	
-	@Bean
-	public WebMvcConfigurer corsConfigurer() {
-		return new WebMvcConfigurer() {
-			@Override
-			public void addCorsMappings(CorsRegistry registry) {
-				registry.addMapping("/randomGame").allowedOrigins("http://localhost:8080");
-			}
-		};
-	}
+  
+  public static void main(String[] args) {
+    SpringApplication.run(ServerApplication.class, args);
+  }
 }

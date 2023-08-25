@@ -84,6 +84,21 @@ public final class Board {
    */
   public boolean placeRoad(Road road) {
     Edge curEdge = this.edges.get(road.getPlacement());
+    if (this.canPlaceRoad(road)) {
+      curEdge.setRoad(road);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Contains logic for determining whether or not a road can be placed.
+   *
+   * @param road road attempting to be placed.
+   * @return whether the placement was succesful or not.
+   */
+  public boolean canPlaceRoad(Road road) {
+    Edge curEdge = this.edges.get(road.getPlacement());
     // If the current edge already has a road, cannot place road.
     if (curEdge.hasRoad()) {
       return false;
@@ -113,7 +128,6 @@ public final class Board {
         .stream()
         .anyMatch((edge) -> edge.hasRoad() && edge.getRoad().getPlayerId() == road.getPlayerId());
     if (hasRoadOneEdgeAway) {
-      curEdge.setRoad(road);
       return true;
     }
     return false;
@@ -127,6 +141,22 @@ public final class Board {
    * @return if placement was successful
    */
   public boolean placeSettlement(Settlement settlement) {
+    Node curNode = this.nodes.get(settlement.getPlacement());
+    if (this.canPlaceSettlement(settlement)) {
+      curNode.setBuilding(settlement);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Contains logic for determining whether or not the given settlement
+   * can be placed.
+   *
+   * @param settlement settlement attemted to be placed
+   * @return whether the settlement was successful or not.
+   */
+  public boolean canPlaceSettlement(Settlement settlement) {
     Node curNode = this.nodes.get(settlement.getPlacement());
     // Check if attempted placement node has a building
     if (curNode.hasBuilding()) {
@@ -149,7 +179,6 @@ public final class Board {
     }
 
     if (settlement.isInitialPlacement()) {
-      curNode.setBuilding(settlement);
       return true;
     }
 
@@ -161,7 +190,6 @@ public final class Board {
         );
 
     if (ownedRoadNearby) {
-      curNode.setBuilding(settlement);
       return true;
     }
 
@@ -177,11 +205,25 @@ public final class Board {
    */
   public boolean placeCity(City city) {
     Node curNode = this.nodes.get(city.getPlacement());
+    if (this.canPlaceCity(city)) {
+      curNode.setBuilding(city);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Contains logic for determining whether or not a city can be placed.
+   *
+   * @param city city attempting to be placed.
+   * @return whether or not the city can be placed.
+   */
+  public boolean canPlaceCity(City city) {
+    Node curNode = this.nodes.get(city.getPlacement());
 
     if (curNode.hasBuilding()
         && curNode.getBuilding() instanceof Settlement
         && curNode.getBuilding().getPlayerId() == city.getPlayerId()) {
-      curNode.setBuilding(city);
       return true;
     }
 

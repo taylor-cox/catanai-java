@@ -22,7 +22,7 @@ import java.util.Set;
  * Represents game of Catan.
  */
 public final class Game {
-  private List<Player> players;
+  private List<? extends Player> players;
   private Player currentPlayer;
   private Board board;
   private Dealer dealer;
@@ -30,16 +30,40 @@ public final class Game {
   private List<GameState> gameStates;
   private boolean ended;
   private int lastDiceRollValue;
-  private final ActionExecutor actionExecutor;
+  private ActionExecutor actionExecutor;
+  private State currentState;
+  private Settlement previousSettlement;
+
+  private enum State {
+    START_BUILD, START_ROAD, START2_BUILD, START2_ROAD, BUSINESS_AS_USUAL, TRADE
+  }
 
   /**
    * Creates a new Catan game with players @param players.
    *
    * @param players players in a game of Catan.
    */
-  public Game(List<Player> players) {
+  public Game(List<? extends Player> players) {
     this.players = players;
     this.currentPlayer = players.get(0);
+    this.board = new Board();
+    this.dealer = new Dealer();
+    this.gameStates = new ArrayList<GameState>();
+    this.ended = false;
+    this.lastDiceRollValue = 0;
+    this.currentGameState = new GameState(this);
+    this.gameStates.add(this.currentGameState);
+    this.actionExecutor = new ActionExecutor(this);
+    this.currentState = State.START_BUILD;
+  }
+
+  /**
+   * Resets the game to initial state.
+   */
+  private void resetHelper() {
+    for (Player p : this.players) {
+      p.reset();
+    }
     this.board = new Board();
     this.dealer = new Dealer();
     this.gameStates = new ArrayList<GameState>();
@@ -72,11 +96,29 @@ public final class Game {
     this.currentGameState = this.gameStates.get(this.gameStates.size() - 1);
   }
 
-  /**
-   * Represents the next turn of the Catan game.
-   */
-  public void nextTurn() {
-    Player curPlayer = this.currentPlayer;
+  private void makeMove(Player currentPlayer) {
+    switch (this.currentState) {
+      case START_BUILD:
+        handleStartBuild(currentPlayer);
+        break;
+      case START_ROAD:
+        handleStartRoad(currentPlayer);
+        break;
+      case START2_BUILD:
+        handleStartBuild2(currentPlayer);
+        break;
+      case START2_ROAD:
+        handleStartRoad2(currentPlayer);
+        break;
+      case BUSINESS_AS_USUAL:
+        handleTurn(currentPlayer);
+        break;
+      default:
+        return;
+    }
+  }
+
+  private void handleTurn(Player curPlayer) {
     int diceRoll = this.rollDice();
     if (diceRoll != 7) {
       this.produce(diceRoll);
@@ -96,6 +138,72 @@ public final class Game {
   }
 
   /**
+   * Handles second starting road of a player.
+   *
+   * @param currentPlayer current player in game
+   */
+  private void handleStartRoad2(Player currentPlayer) {
+    this.currentGameState = 
+        this.actionExecutor.secondRoad(currentPlayer, this.previousSettlement, currentGameState);
+    this.gameStates.add(currentGameState);
+    if (this.gameStates.size() >= 16) {
+      this.currentState = State.BUSINESS_AS_USUAL;
+    } else {
+      this.currentState = State.START2_BUILD;
+      this.currentPlayer = this.players.get(this.currentPlayer.getId().getValue() - 1);
+    }
+  }
+
+  /**
+   * Handles second starting settlement of player.
+   *
+   * @param currentPlayer current game player.
+   */
+  private void handleStartBuild2(Player currentPlayer) {
+    ActionExecutor.SettlementGameStatePair sgsp = 
+        this.actionExecutor.secondSettlement(currentPlayer, currentGameState);
+    this.previousSettlement = sgsp.getSettlement();
+    this.currentGameState = sgsp.getGameState();
+    this.gameStates.add(currentGameState);
+    this.currentState = State.START2_ROAD;
+  }
+
+  /**
+   * Handles starting road of current player.
+   *
+   * @param currentPlayer current game player.
+   */
+  private void handleStartRoad(Player currentPlayer) {
+    this.currentGameState = this.actionExecutor.startingSettlement(currentPlayer, currentGameState);
+    this.gameStates.add(currentGameState);
+    if (this.gameStates.size() >= 8) {
+      this.currentState = State.START2_BUILD;
+    } else {
+      this.currentState = State.START_BUILD;
+      this.currentPlayer = this.players.get(this.currentPlayer.getId().getValue() - 1);
+    }
+  }
+
+  /**
+   * Handles starting settlement of player.
+   *
+   * @param currentPlayer current game player.
+   */
+  private void handleStartBuild(Player currentPlayer) {
+    this.currentGameState = this.actionExecutor.startingSettlement(currentPlayer, currentGameState);
+    this.gameStates.add(currentGameState);
+    this.currentState = State.START_ROAD;
+  }
+
+  /**
+   * Represents the next turn of the Catan game.
+   */
+  public void nextTurn() {
+    Player curPlayer = this.currentPlayer;
+    this.makeMove(curPlayer);
+  }
+
+  /**
    * Produce resources based on dice roll.
    * If there are not enough resource cards to distribute among multiple
    * players, no players get any resource cards.
@@ -106,9 +214,7 @@ public final class Game {
    */
   private void produce(int diceRoll) {
     HashMap<Player, HashMap<Terrain, Integer>> resources = this.getResourcesToProduce(diceRoll);
-
     HashMap<Terrain, Integer> amountToProduce = this.getAmountOfResourcesToProduce(resources);
-
     Set<Terrain> doNotProduce = this.getResourcesUnableToProduce(resources, amountToProduce);
 
     // Give all players resources for the roll
@@ -235,7 +341,7 @@ public final class Game {
   //*************************** Getters and Setters ****************************
   //****************************************************************************
 
-  public List<Player> getPlayers() {
+  public List<? extends Player> getPlayers() {
     return this.players;
   }
 
@@ -265,5 +371,24 @@ public final class Game {
 
   public int getLastDiceRollValue() {
     return this.lastDiceRollValue;
+  }
+
+  /**
+   * Whether or not the current game is in it's starting turns or not.
+   *
+   * @return whether the game is in its starting turns or not.
+   */
+  public boolean startingTurnSettlement() {
+    return this.currentState == State.START_BUILD 
+        || this.currentState == State.START2_BUILD;
+  }
+
+  public boolean startingTurnRoad() {
+    return this.currentState == State.START_ROAD 
+        || this.currentState == State.START2_ROAD;
+  }
+
+  public void setPlayers(ArrayList<Player> players) {
+    this.players = players;
   }
 }
