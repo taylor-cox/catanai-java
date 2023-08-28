@@ -13,6 +13,7 @@ import com.catanai.server.model.player.Player;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
 * Respresents all Catan game data as arrays of integers.
@@ -386,5 +387,30 @@ public final class GameState {
       new int[][] {ports},
       playerMetadata
     };
+  }
+
+  public Map<String, int[][]> toMap() {
+    Map<String, int[][]> map = new HashMap<>();
+    map.put("tiles", this.tiles);
+    map.put("banks", new int[][] {banks});
+    map.put("playerPerspectiveResourceCards", this.playerPerspectiveResourceCards);
+    map.put("playerFullResourceCards", this.playerFullResourceCards);
+    map.put("edges", new int[][] {this.edges});
+    map.put("nodes", this.nodes);
+    map.put("ports", new int[][] {this.ports});
+    map.put("playerMetadata", this.playerMetadata);
+    map.put("lastRoll", new int[][] {{this.lastDiceRollValue}});
+    map.put("currentPlayer", new int[][] {{this.game.getCurrentPlayer().getId().getValue()}});
+    int[][] orderOfCards = new int[][] {{
+        this.orderOfCards[0].getValue(),
+        this.orderOfCards[1].getValue(),
+        this.orderOfCards[2].getValue(),
+        this.orderOfCards[3].getValue(),
+        this.orderOfCards[4].getValue(),
+      }
+    };
+    map.put("orderOfCards", orderOfCards);
+
+    return map;
   }
 }
