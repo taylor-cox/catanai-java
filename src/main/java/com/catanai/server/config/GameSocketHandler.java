@@ -23,8 +23,9 @@ public class GameSocketHandler extends TextWebSocketHandler {
   public void handleTextMessage(WebSocketSession session, TextMessage message)
       throws InterruptedException, IOException {
     var value = new Gson().fromJson(message.getPayload(), Map.class);
-    Object command = value.get("command");
-    session.sendMessage(new TextMessage(commandHandler.handleCommand(command.toString())));
+    String command = value.get("command").toString();
+    String action = value.get("action") == null ? null : value.get("action").toString();
+    session.sendMessage(new TextMessage(commandHandler.handleCommand(command, action)));
   }
 
   @Override
