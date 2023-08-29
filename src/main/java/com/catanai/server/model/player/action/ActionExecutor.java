@@ -27,10 +27,6 @@ import java.util.stream.IntStream;
 */
 public final class ActionExecutor {
   private Game game;
-  // private Board board;
-  // private List<Player> players;
-  // private Dealer dealer;
-  // private boolean inStartingTurns;
   private final HashMap<Action, ResourceCard[]> requiredResourcesForAction;
   private final ResourceCard[] orderOfCards = {
     ResourceCard.WOOL,
@@ -39,6 +35,8 @@ public final class ActionExecutor {
     ResourceCard.ORE,
     ResourceCard.BRICK,
   };
+
+  private int lastActionID;
   
   /**
    * Generate an ActionExecutor working on a game @param game.
@@ -49,6 +47,7 @@ public final class ActionExecutor {
     this.game = game;
     this.requiredResourcesForAction = new HashMap<Action, ResourceCard[]>();
     this.initializeRequiredResourcesForAction();
+    this.lastActionID = 0;
   }
   
   /**
@@ -58,6 +57,8 @@ public final class ActionExecutor {
   * @return whether the action was successful or not.
   */
   public boolean doAction(ActionMetadata amd, Player p) {
+    this.lastActionID = amd.getAction().getValue();
+    System.out.println(amd.getAction());
     boolean successful = false;
     switch (amd.getAction()) {
       // Handle building actions
@@ -141,38 +142,7 @@ public final class ActionExecutor {
   /**************************************************************************/
   /********************** Starting Turns Helper Functions *******************/
   /**************************************************************************/
-  /**
-  * Represents the starting turns of a Catan game.
-  * Each player chooses a settlement location, and then passes to the next player
-  * until we reach the last player. Then, that player chooses 2 settlements
-  * and passes to the player previous up to and including the first player.
-  *
-  * @return list of gamestates to add to parent game.
-  */
-  public List<GameState> startingTurns(GameState startingGamestate) {
-    ArrayList<GameState> toReturn = new ArrayList<GameState>();
-    GameState nextGameState = startingGamestate;
-    for (int i = 0; i < this.game.getPlayers().size(); i++) {
-      Player currentPlayer = this.game.getPlayers().get(i);
-      nextGameState = this.startingSettlement(currentPlayer, nextGameState);
-      toReturn.add(nextGameState);
-      nextGameState = this.startingRoad(currentPlayer, nextGameState);
-      toReturn.add(nextGameState);
-    }
-    
-    for (int i = this.game.getPlayers().size() - 1; i >= 0; i--) {
-      Player currentPlayer = this.game.getPlayers().get(i);
-      SettlementGameStatePair secondSettlementAndGameState = 
-          this.secondSettlement(currentPlayer, nextGameState);
-      nextGameState = secondSettlementAndGameState.getGameState();
-      toReturn.add(nextGameState);
-      Settlement secondSettlement = secondSettlementAndGameState.getSettlement();
-      nextGameState = this.secondRoad(currentPlayer, secondSettlement, nextGameState);
-      toReturn.add(nextGameState);
-    }
-    return toReturn;
-  }
-  
+
   /**
   * Queries player until a valid settlement location is chosen on the board.
   *
@@ -180,30 +150,26 @@ public final class ActionExecutor {
   * @return gamestate after the starting settlement is placed.
   */
   public GameState startingSettlement(Player p, GameState gs) {
-    while (true) {
-      int[] actionMetadata = p.play(gs);
-      ActionMetadata amd = new ActionMetadata(actionMetadata);
-      Action curAction = amd.getAction();
-      
-      if (curAction != Action.PLAY_SETTLEMENT) {
-        // TODO: Something with player reward function.
-        continue;
-      }
+    int[] actionMetadata = p.play(gs);
+    ActionMetadata amd = new ActionMetadata(actionMetadata);
+    Action curAction = amd.getAction();
+    this.lastActionID = curAction.getValue();
+    
+    if (curAction != Action.PLAY_SETTLEMENT) {
+      return null;
+    }
 
-      Settlement attemptedSettlement = new Settlement(
-          amd.getRelevantMetadata()[0],
-          p.getId(),
-          true
-      );
+    Settlement attemptedSettlement = new Settlement(
+        amd.getRelevantMetadata()[0],
+        p.getId(),
+        true
+    );
 
-      if (!this.game.getBoard().placeSettlement(attemptedSettlement)) {
-        // TODO: Something with player reward function.
-        continue;
-      } else {
-        // TODO: Something with player reward function.
-        p.setRemainingSettlements(p.getRemainingSettlements() - 1);
-        return new GameState(this.game);
-      }
+    if (!this.game.getBoard().placeSettlement(attemptedSettlement)) {
+      return null;
+    } else {
+      p.setRemainingSettlements(p.getRemainingSettlements() - 1);
+      return new GameState(this.game);
     }
   }
 
@@ -214,30 +180,25 @@ public final class ActionExecutor {
    * @return gamestate after the road is placed.
    */
   public GameState startingRoad(Player p, GameState gs) {
-    while (true) {
-      int[] actionMetadata = p.play(gs);
-      ActionMetadata amd = new ActionMetadata(actionMetadata);
-      Action curAction = amd.getAction();
+    int[] actionMetadata = p.play(gs);
+    ActionMetadata amd = new ActionMetadata(actionMetadata);
+    Action curAction = amd.getAction();
+    this.lastActionID = curAction.getValue();
 
-      if (curAction != Action.PLAY_ROAD) {
-        // TODO: Something with player reward function.
-        continue;
-      }
-
-      Road attemptedRoad = new Road(
-          amd.getRelevantMetadata()[0],
-          p.getId()
-      );
-
-      if (!this.game.getBoard().placeRoad(attemptedRoad)) {
-        // TODO: Something with player reward function.
-        continue;
-      } else {
-        // TODO: Something with player reward function.
-        p.setRemainingRoads(p.getRemainingRoads() - 1);
-        return new GameState(this.game);
-      }
+    if (curAction != Action.PLAY_ROAD) {
+      return null;
     }
+
+    Road attemptedRoad = new Road(
+        amd.getRelevantMetadata()[0],
+        p.getId()
+    );
+
+    if (!this.game.getBoard().placeRoad(attemptedRoad)) {
+      return null;
+    }
+    p.setRemainingRoads(p.getRemainingRoads() - 1);
+    return new GameState(this.game);
   }
 
   /**
@@ -249,40 +210,36 @@ public final class ActionExecutor {
    * @return settlement and gamestate after second settlement is placed.
    */
   public SettlementGameStatePair secondSettlement(Player p, GameState gs) {
-    while (true) {
-      int[] actionMetadata = p.play(gs);
-      ActionMetadata amd = new ActionMetadata(actionMetadata);
-      Action curAction = amd.getAction();
+    int[] actionMetadata = p.play(gs);
+    ActionMetadata amd = new ActionMetadata(actionMetadata);
+    Action curAction = amd.getAction();
+    this.lastActionID = curAction.getValue();
 
-      if (curAction != Action.PLAY_SETTLEMENT) {
-        // TODO: Something with player reward function.
-        continue;
-      }
+    if (curAction != Action.PLAY_SETTLEMENT) {
+      return null;
+    }
 
-      Settlement attemptedSettlement = new Settlement(
-          amd.getRelevantMetadata()[0],
-          p.getId(),
-          true);
+    Settlement attemptedSettlement = new Settlement(
+        amd.getRelevantMetadata()[0],
+        p.getId(),
+        true);
 
-      if (!this.game.getBoard().placeSettlement(attemptedSettlement)) {
-        // TODO: Something with player reward function.
-        continue;
-      } else {
-        // TODO: Something with player reward function.
-        ArrayList<Terrain> attemptedSettlementTerrains = this.game.getBoard()
-            .getNodes()
-            .get(attemptedSettlement.getPlacement())
-            .getProduces();
-        for (Terrain t : attemptedSettlementTerrains) {
-          if (this.game.getDealer().canDrawResource(t, 1)) {
-            p.addToKnownCards(this.game.getDealer().drawResource(t));
-          }
+    if (!this.game.getBoard().placeSettlement(attemptedSettlement)) {
+      return null;
+    } else {
+      ArrayList<Terrain> attemptedSettlementTerrains = this.game.getBoard()
+          .getNodes()
+          .get(attemptedSettlement.getPlacement())
+          .getProduces();
+      for (Terrain t : attemptedSettlementTerrains) {
+        if (this.game.getDealer().canDrawResource(t, 1)) {
+          p.addToKnownCards(this.game.getDealer().drawResource(t));
         }
-        p.setRemainingSettlements(p.getRemainingSettlements() - 1);
-        return new SettlementGameStatePair(
-            attemptedSettlement,
-            new GameState(this.game));
       }
+      p.setRemainingSettlements(p.getRemainingSettlements() - 1);
+      return new SettlementGameStatePair(
+          attemptedSettlement,
+          new GameState(this.game));
     }
   }
 
@@ -295,38 +252,34 @@ public final class ActionExecutor {
    * @return gamestate after second road is placed.
    */
   public GameState secondRoad(Player p, Settlement secondSettlement, GameState gs) {
-    while (true) {
-      int[] actionMetadata = p.play(gs);
-      ActionMetadata amd = new ActionMetadata(actionMetadata);
-      Action curAction = amd.getAction();
+    int[] actionMetadata = p.play(gs);
+    ActionMetadata amd = new ActionMetadata(actionMetadata);
+    Action curAction = amd.getAction();
+    this.lastActionID = curAction.getValue();
 
-      if (curAction != Action.PLAY_ROAD) {
-        // TODO: Something with player reward function.
-        continue;
-      }
+    if (curAction != Action.PLAY_ROAD) {
+      return null;
+    }
 
-      Road attemptedRoad = new Road(
-          amd.getRelevantMetadata()[0],
-          p.getId());
+    Road attemptedRoad = new Road(
+        amd.getRelevantMetadata()[0],
+        p.getId());
 
-      boolean roadNearSecondSettlement = false;
-      ArrayList<Edge> toCheck = this.game
-          .getBoard()
-          .getNodes()
-          .get(secondSettlement.getPlacement())
-          .getConnectedEdges();
-      for (Edge e : toCheck) {
-        roadNearSecondSettlement |= e.getIndex() == attemptedRoad.getPlacement();
-      }
+    boolean roadNearSecondSettlement = false;
+    ArrayList<Edge> toCheck = this.game
+        .getBoard()
+        .getNodes()
+        .get(secondSettlement.getPlacement())
+        .getConnectedEdges();
+    for (Edge e : toCheck) {
+      roadNearSecondSettlement |= e.getIndex() == attemptedRoad.getPlacement();
+    }
 
-      if (!roadNearSecondSettlement || !this.game.getBoard().placeRoad(attemptedRoad)) {
-        // TODO: Something with player reward function.
-        continue;
-      } else {
-        // TODO: Something with player reward function.
-        p.setRemainingRoads(p.getRemainingRoads() - 1);
-        return new GameState(this.game);
-      }
+    if (!roadNearSecondSettlement || !this.game.getBoard().placeRoad(attemptedRoad)) {
+      return null;
+    } else {
+      p.setRemainingRoads(p.getRemainingRoads() - 1);
+      return new GameState(this.game);
     }
   }
 
@@ -793,5 +746,9 @@ public final class ActionExecutor {
       this.makePlayerMoveRobber(p, currentGameState);
     }
     return new GameState(this.game);
+  }
+
+  public int getLastActionID() {
+    return this.lastActionID;
   }
 }
