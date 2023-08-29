@@ -33,6 +33,7 @@ public final class Game {
   private ActionExecutor actionExecutor;
   private State currentState;
   private Settlement previousSettlement;
+  private Action lastAction;
 
   private enum State {
     START_BUILD, START_ROAD, START2_BUILD, START2_ROAD, BUSINESS_AS_USUAL, TRADE
@@ -57,23 +58,6 @@ public final class Game {
     this.currentState = State.START_BUILD;
   }
 
-  // /**
-  //  * Resets the game to initial state.
-  //  */
-  // private void resetHelper() {
-  //   for (Player p : this.players) {
-  //     p.reset();
-  //   }
-  //   this.board = new Board();
-  //   this.dealer = new Dealer();
-  //   this.gameStates = new ArrayList<GameState>();
-  //   this.ended = false;
-  //   this.lastDiceRollValue = 0;
-  //   this.currentGameState = new GameState(this);
-  //   this.gameStates.add(this.currentGameState);
-  //   this.actionExecutor = new ActionExecutor(this);
-  // }
-
   /**
    * Updates the gamestate, and adds it to the list of gamestates.
    */
@@ -82,106 +66,69 @@ public final class Game {
     this.gameStates.add(this.currentGameState);
   }
 
+  /**
+   * Updates the gamestate, and adds it to the list of gamestates.
+   *
+   * @param gs gamestate to update to.
+   */
+  private void updateGamestate(GameState gs) {
+    this.lastAction = Action.valueOf(this.actionExecutor.getLastActionID());
+    this.currentGameState = gs;
+    this.gameStates.add(gs);
+  }
+
   // ****************************************************************************
   // *************************** Gameplay Functions *****************************
   // ****************************************************************************
 
-  /**
-   * Play the starting turns of the game, and add them all to gamestates.
-   */
-  public void startingTurns() {
-    for (GameState gs : this.actionExecutor.startingTurns(currentGameState)) {
-      this.gameStates.add(gs);
+  private boolean currentPlayerMakeMove() {
+    boolean toReturn = false;
+    if (this.currentState == State.START_BUILD && this.lastAction != null) {
+      this.currentPlayer = this.players.get(this.currentPlayer.getId().getValue());
+    } else if (this.currentState == State.START2_BUILD && this.gameStates.size() > 9) {
+      this.currentPlayer = this.players.get(this.currentPlayer.getId().getValue() - 2);
     }
-    this.currentGameState = this.gameStates.get(this.gameStates.size() - 1);
-  }
-
-  private void makeMove(Player currentPlayer) {
     switch (this.currentState) {
       case START_BUILD:
-        handleStartBuild(currentPlayer);
+        toReturn |= handleStartBuild();
         break;
       case START_ROAD:
-        handleStartRoad(currentPlayer);
+        toReturn |=  handleStartRoad();
         break;
       case START2_BUILD:
-        handleStartBuild2(currentPlayer);
+        toReturn |=  handleStartBuild2();
         break;
       case START2_ROAD:
-        handleStartRoad2(currentPlayer);
+        toReturn |=  handleStartRoad2();
         break;
       case BUSINESS_AS_USUAL:
-        handleTurn(currentPlayer);
+        toReturn |=  handleMove();
         break;
       default:
-        return;
+        toReturn |=  false;
+        break;
     }
+    return toReturn;
   }
 
-  private void handleTurn(Player curPlayer) {
-    int diceRoll = this.rollDice();
-    if (diceRoll != 7) {
-      this.produce(diceRoll);
-    } else {
-      this.actionExecutor.makePlayersDiscard();
-      this.actionExecutor.makePlayerMoveRobber(curPlayer, this.currentGameState);
-    }
-    ActionMetadata amd = new ActionMetadata(
-        curPlayer.play(this.currentGameState));
-    while (amd.getAction() != Action.END_TURN) {
-      if (this.actionExecutor.doAction(amd, curPlayer)) {
-        // TODO: Something with reward function.
+  private boolean handleMove() {
+    if (this.gameStates.size() >= 16 && this.lastAction == Action.END_TURN) {
+      int diceRoll = this.rollDice();
+      if (diceRoll != 7) {
+        this.produce(diceRoll);
+      } else {
+        this.actionExecutor.makePlayersDiscard();
+        this.actionExecutor.makePlayerMoveRobber(this.currentPlayer, this.currentGameState);
       }
-      this.updateGamestate();
-      amd = new ActionMetadata(curPlayer.play(this.currentGameState));
     }
-  }
 
-  /**
-   * Handles second starting road of a player.
-   *
-   * @param currentPlayer current player in game
-   */
-  private void handleStartRoad2(Player currentPlayer) {
-    this.currentGameState = 
-        this.actionExecutor.secondRoad(currentPlayer, this.previousSettlement, currentGameState);
-    this.gameStates.add(currentGameState);
-    if (this.gameStates.size() >= 16) {
-      this.currentState = State.BUSINESS_AS_USUAL;
-    } else {
-      this.currentState = State.START2_BUILD;
-      this.currentPlayer = this.players.get(this.currentPlayer.getId().getValue() - 1);
+    ActionMetadata amd = new ActionMetadata(this.currentPlayer.play(this.currentGameState));
+    this.lastAction = amd.getAction();
+    if (!this.actionExecutor.doAction(amd, this.currentPlayer)) {
+      return false;
     }
-  }
-
-  /**
-   * Handles second starting settlement of player.
-   *
-   * @param currentPlayer current game player.
-   */
-  private void handleStartBuild2(Player currentPlayer) {
-    ActionExecutor.SettlementGameStatePair sgsp = 
-        this.actionExecutor.secondSettlement(currentPlayer, currentGameState);
-    this.previousSettlement = sgsp.getSettlement();
-    this.currentGameState = sgsp.getGameState();
-    this.gameStates.add(currentGameState);
-    this.currentState = State.START2_ROAD;
-  }
-
-  /**
-   * Handles starting road of current player.
-   *
-   * @param currentPlayer current game player.
-   */
-  private void handleStartRoad(Player currentPlayer) {
-    this.currentGameState = this.actionExecutor.startingSettlement(currentPlayer, currentGameState);
-    this.gameStates.add(currentGameState);
-    if (this.gameStates.size() >= 8) {
-      this.currentState = State.START2_BUILD;
-    } else {
-      this.currentState = State.START_BUILD;
-      this.currentPlayer = this.players.get(this.currentPlayer.getId().getValue() - 1);
-    }
+    this.updateGamestate();
+    return true;
   }
 
   /**
@@ -189,18 +136,78 @@ public final class Game {
    *
    * @param currentPlayer current game player.
    */
-  private void handleStartBuild(Player currentPlayer) {
-    this.currentGameState = this.actionExecutor.startingSettlement(currentPlayer, currentGameState);
-    this.gameStates.add(currentGameState);
+  private boolean handleStartBuild() {
+    GameState actionGameState = this.actionExecutor.startingSettlement(this.currentPlayer, currentGameState);
+    if (actionGameState == null) {
+      return false;
+    }
+    this.updateGamestate(actionGameState);
     this.currentState = State.START_ROAD;
+    return true;
+  }
+
+  /**
+   * Handles starting road of current player.
+   *
+   * @param currentPlayer current game player.
+   */
+  private boolean handleStartRoad() {
+    GameState actionGameState = this.actionExecutor.startingRoad(this.currentPlayer, currentGameState);
+    if (actionGameState == null) {
+      return false;
+    }
+    this.updateGamestate(actionGameState);
+    if (this.gameStates.size() >= 8) {
+      this.currentState = State.START2_BUILD;
+    } else {
+      this.currentState = State.START_BUILD;
+    }
+    return true;
+  }
+
+  /**
+   * Handles second starting settlement of player.
+   *
+   * @param currentPlayer current game player.
+   */
+  private boolean handleStartBuild2() {
+    ActionExecutor.SettlementGameStatePair sgsp = 
+        this.actionExecutor.secondSettlement(this.currentPlayer, currentGameState);
+    if (sgsp == null) {
+      return false;
+    }
+    this.previousSettlement = sgsp.getSettlement();
+    this.updateGamestate(sgsp.getGameState());
+    this.currentState = State.START2_ROAD;
+    return true;
+  }
+  
+  /**
+   * Handles second starting road of a player.
+   *
+   * @param currentPlayer current player in game
+   */
+  private boolean handleStartRoad2() {
+    GameState actionGameState = 
+        this.actionExecutor.secondRoad(this.currentPlayer, this.previousSettlement, currentGameState);
+    if (actionGameState == null) {
+      return false;
+    }
+    this.updateGamestate(actionGameState);
+    if (this.gameStates.size() >= 16) {
+      this.currentState = State.BUSINESS_AS_USUAL;
+      this.lastAction = Action.END_TURN;
+    } else {
+      this.currentState = State.START2_BUILD;
+    }
+    return true;
   }
 
   /**
    * Represents the next turn of the Catan game.
    */
-  public void nextTurn() {
-    Player curPlayer = this.currentPlayer;
-    this.makeMove(curPlayer);
+  public boolean nextMove() {
+    return this.currentPlayerMakeMove();
   }
 
   /**
@@ -390,5 +397,12 @@ public final class Game {
 
   public void setPlayers(ArrayList<Player> players) {
     this.players = players;
+  }
+
+  public int getLastAction() {
+    if (this.actionExecutor == null) {
+      return 0;
+    }
+    return this.actionExecutor.getLastActionID();
   }
 }

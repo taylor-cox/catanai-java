@@ -50,13 +50,15 @@ public class MainController {
         continue;
       }
       int[][] setMoves = moves[counter];
-      ((DeterministicPlayer) p).setNextMoveMetadata(setMoves);
+      ((DeterministicPlayer) p).addAllMoves(setMoves);
       counter += 1;
     }
 
     Game game = new Game(players);
 
-    game.startingTurns();
+    for (int i = 0; i < 16; i++) {
+      game.nextMove();
+    }
 
     return game.getCurrentGameState();
   }
