@@ -34,7 +34,8 @@ class GameStateDAO:
       playerPerspectiveResourceCards = gamestateDict['playerPerspectiveResourceCards'],
       ports = gamestateDict['ports'][0],
       lastRoll = gamestateDict['lastRoll'][0][0],
-      currentPlayer = gamestateDict['currentPlayer'][0][0]
+      currentPlayer = gamestateDict['currentPlayer'][0][0],
+      actionID = gamestateDict['actionID'][0][0]
     )
     self.s.add(gamestateToAdd)
     self.s.commit()
