@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.apache.commons.lang.NotImplementedException;
 import org.json.JSONArray;
 
 /**
@@ -26,28 +25,50 @@ public class SocketCommandHandler {
    * @param command command to handle from websocket.
    * @return string of command output.
    */
-  public String handleCommand(String command, String action) {
+  public String handleCommand(String command, String action, String playerID) {
     switch (command) {
       case "newGame":
-        this.players = new ArrayList<DeterministicPlayer>();
-        this.players.add(new DeterministicPlayer(PlayerId.ONE));
-        this.players.add(new DeterministicPlayer(PlayerId.TWO));
-        this.players.add(new DeterministicPlayer(PlayerId.THREE));
-        this.players.add(new DeterministicPlayer(PlayerId.FOUR));
-        this.game = new Game(players);
-        return this.currentGameStateAsJSON();
+        return this.handleNewGame();
       case "getCurrentGamestate":
         return this.currentGameStateAsJSON();
       case "makeMove":
-        throw new NotImplementedException("Not implemented");
-        DeterministicPlayer currentPlayer = (DeterministicPlayer) this.game.getCurrentPlayer();
-        JSONArray jsonArray = new JSONArray(action);
-        currentPlayer.setNextMoveMetadata();
-        // this.game.
-        // break;
+        return this.handleMakeMove();
+      case "addPlayerMove":
+        return this.handleAddPlayerMove(action, playerID);
       default:
-        return "";
+        return "ERROR: command not handled.";
     }
+  }
+
+  private String handleAddPlayerMove(String action, String playerID) {
+    DeterministicPlayer playerToAddActions = this.players
+      .stream()
+      .filter(player -> player.getId().toString().equals(playerID))
+      .findFirst()
+      .get();
+    JSONArray jsonActionArr = new JSONArray(action);
+    int[] intActionArr = new int[jsonActionArr.length()];
+    for (int i = 0; i < jsonActionArr.length(); ++i) {
+      intActionArr[i] = jsonActionArr.optInt(i);
+    }
+
+    playerToAddActions.addNextMove(intActionArr);
+    return "{\"success\": true}";
+  }
+
+  private String handleMakeMove() {
+    this.game.nextMove();
+    return this.currentGameStateAsJSON();
+  }
+
+  private String handleNewGame() {
+    this.players = new ArrayList<DeterministicPlayer>();
+    this.players.add(new DeterministicPlayer(PlayerId.ONE));
+    this.players.add(new DeterministicPlayer(PlayerId.TWO));
+    this.players.add(new DeterministicPlayer(PlayerId.THREE));
+    this.players.add(new DeterministicPlayer(PlayerId.FOUR));
+    this.game = new Game(players);
+    return this.currentGameStateAsJSON();
   }
 
   private String currentGameStateAsJSON() {
