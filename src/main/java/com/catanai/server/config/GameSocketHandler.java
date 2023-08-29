@@ -25,7 +25,8 @@ public class GameSocketHandler extends TextWebSocketHandler {
     var value = new Gson().fromJson(message.getPayload(), Map.class);
     String command = value.get("command").toString();
     String action = value.get("action") == null ? null : value.get("action").toString();
-    session.sendMessage(new TextMessage(commandHandler.handleCommand(command, action)));
+    String playerID = value.get("playerID") == null ? null : value.get("playerID").toString();
+    session.sendMessage(new TextMessage(commandHandler.handleCommand(command, action, playerID)));
   }
 
   @Override
