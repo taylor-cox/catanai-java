@@ -66,6 +66,9 @@ public final class GameState {
   
   /** Contains the last dice roll value. */
   private int lastDiceRollValue;
+
+  /** Contains information on the last action played by the player. */
+  private int lastAction;
   
   /** Order of all the cards. This will stay consistent whenever reffering to cards. */
   private final ResourceCard[] orderOfCards = {
@@ -92,6 +95,7 @@ public final class GameState {
     this.ports = new int[9];
     this.playerMetadata = new int[4][8];
     this.lastDiceRollValue = game.getLastDiceRollValue();
+    this.lastAction = game.getLastAction();
     
     // Populate all class variables.
     this.populateTiles();
@@ -410,6 +414,7 @@ public final class GameState {
       }
     };
     map.put("orderOfCards", orderOfCards);
+    map.put("actionID", new int[][] {{this.lastAction}});
 
     return map;
   }
