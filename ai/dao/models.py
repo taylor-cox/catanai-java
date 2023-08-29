@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, Date, ARRAY, BigInteger, SmallInteger
+from sqlalchemy import Column, ARRAY, BigInteger, SmallInteger
 
 Base = declarative_base()
 
@@ -18,6 +18,7 @@ class GameState(Base):
     ports = Column(ARRAY(SmallInteger))
     lastRoll = Column(SmallInteger)
     currentPlayer = Column(SmallInteger)
+    actionID = Column(SmallInteger)
 
     def __repr__(self):
         return f"<GameState(id='{self.id})>"
