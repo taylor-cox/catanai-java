@@ -2,8 +2,6 @@ package com.catanai.server.model.player;
 
 import com.catanai.server.model.gamestate.GameState;
 import com.catanai.server.model.player.action.ActionMetadata;
-
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
 
