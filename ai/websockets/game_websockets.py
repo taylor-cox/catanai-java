@@ -1,6 +1,6 @@
 import websocket
 import json
-import time
+from typing import List
 
 class GameWebSocketHandler:
   """Handler with context manager for handling websocket connection to game,
@@ -24,7 +24,7 @@ class GameWebSocketHandler:
     self.ws.send(bytes(actionString, "utf-8"))
     return self.ws.recv()
 
-  def addMove(self, action: list, playerID: str) -> str:
+  def addMove(self, action: List[int], playerID: str) -> str:
     actionString = json.dumps(
       {
         'command': 'addPlayerMove',
