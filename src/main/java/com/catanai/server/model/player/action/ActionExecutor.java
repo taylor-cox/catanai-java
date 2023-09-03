@@ -58,6 +58,7 @@ public final class ActionExecutor {
   */
   public boolean doAction(ActionMetadata amd, Player p) {
     this.lastActionID = amd.getAction().getValue();
+    System.out.println("Player: " + p.getId().getValue());
     System.out.println(amd.getAction());
     boolean successful = false;
     switch (amd.getAction()) {
@@ -155,7 +156,7 @@ public final class ActionExecutor {
     Action curAction = amd.getAction();
     this.lastActionID = curAction.getValue();
     
-    if (curAction != Action.PLAY_SETTLEMENT) {
+    if (curAction != Action.PLAY_SETTLEMENT || amd.getRelevantMetadata()[0] > 53) {
       return null;
     }
 
@@ -169,6 +170,7 @@ public final class ActionExecutor {
       return null;
     } else {
       p.setRemainingSettlements(p.getRemainingSettlements() - 1);
+      p.setVictoryPoints(p.getVictoryPoints() + 1);
       return new GameState(this.game);
     }
   }
@@ -185,7 +187,7 @@ public final class ActionExecutor {
     Action curAction = amd.getAction();
     this.lastActionID = curAction.getValue();
 
-    if (curAction != Action.PLAY_ROAD) {
+    if (curAction != Action.PLAY_ROAD || amd.getRelevantMetadata()[0] > 71) {
       return null;
     }
 
@@ -215,7 +217,7 @@ public final class ActionExecutor {
     Action curAction = amd.getAction();
     this.lastActionID = curAction.getValue();
 
-    if (curAction != Action.PLAY_SETTLEMENT) {
+    if (curAction != Action.PLAY_SETTLEMENT || amd.getRelevantMetadata()[0] > 53) {
       return null;
     }
 
@@ -237,6 +239,7 @@ public final class ActionExecutor {
         }
       }
       p.setRemainingSettlements(p.getRemainingSettlements() - 1);
+      p.setVictoryPoints(p.getVictoryPoints() + 1);
       return new SettlementGameStatePair(
           attemptedSettlement,
           new GameState(this.game));
@@ -257,7 +260,7 @@ public final class ActionExecutor {
     Action curAction = amd.getAction();
     this.lastActionID = curAction.getValue();
 
-    if (curAction != Action.PLAY_ROAD) {
+    if (curAction != Action.PLAY_ROAD || amd.getRelevantMetadata()[0] > 71) {
       return null;
     }
 
@@ -344,15 +347,22 @@ public final class ActionExecutor {
 
     List<ResourceCard> takenCards = p.takeAllCardsFromHand(Arrays.asList(requiredResources));
 
-    assert takenCards.containsAll(Arrays.asList(requiredResources)) : 
-        "ERROR: Not all resources taken from hand.";
+    if (!takenCards.containsAll(Arrays.asList(requiredResources))) {
+      return false;
+    }
 
     Settlement s = new Settlement(
         amd.getRelevantMetadata()[0],
         p.getId(),
         false);
 
-    return this.game.getBoard().placeSettlement(s);
+    if (!this.game.getBoard().placeSettlement(s)) {
+      return false;
+    } else {
+      p.setRemainingSettlements(p.getRemainingSettlements() - 1);
+      p.setVictoryPoints(p.getVictoryPoints() + 1);
+      return true;
+    }
   }
 
   /**
@@ -372,13 +382,22 @@ public final class ActionExecutor {
 
     List<ResourceCard> takenCards = p.takeAllCardsFromHand(Arrays.asList(requiredResources));
 
-    assert takenCards.containsAll(Arrays.asList(requiredResources)) : 
-        "ERROR: Not all resources taken from hand.";
+    if (!takenCards.containsAll(Arrays.asList(requiredResources))) {
+      return false;
+    }
 
     City c = new City(
         amd.getRelevantMetadata()[0],
         p.getId());
-    return this.game.getBoard().placeCity(c);
+
+    if (!this.game.getBoard().placeCity(c)) {
+      return false;
+    } else {
+      p.setRemainingCities(p.getRemainingCities() - 1);
+      p.setRemainingSettlements(p.getRemainingSettlements() + 1);
+      p.setVictoryPoints(p.getVictoryPoints() + 1);
+      return true;
+    }
   }
 
   /**
@@ -398,13 +417,20 @@ public final class ActionExecutor {
 
     List<ResourceCard> takenCards = p.takeAllCardsFromHand(Arrays.asList(requiredResources));
 
-    assert takenCards.containsAll(Arrays.asList(requiredResources)) : 
-        "ERROR: Not all resources taken from hand.";
+    if (!takenCards.containsAll(Arrays.asList(requiredResources))) {
+      return false;
+    }
 
     Road r = new Road(
         amd.getRelevantMetadata()[0],
         p.getId());
-    return this.game.getBoard().placeRoad(r);
+    if (!this.game.getBoard().placeRoad(r)) {
+      return false;
+    } else {
+      p.setRemainingRoads(p.getRemainingRoads() - 1);
+      // TODO: Add victory points if longest road.
+      return true;
+    }
   }
 
   /**
@@ -420,8 +446,12 @@ public final class ActionExecutor {
       return false;
     }
     p.removeDevelopmentCard(DevelopmentCard.KNIGHT);
-    // TODO: Returns gamestate. Do something with this.
-    this.makePlayerMoveRobber(p, this.game.getCurrentGameState());
+    int tileIndex = amd.getRelevantMetadata()[0];
+    if (tileIndex > 18) {
+      return false;
+    }
+    this.game.getBoard().placeRobber(amd.getRelevantMetadata()[0]);
+    // TODO: Add victory points if largest army.
     return true;
   }
 
@@ -441,11 +471,9 @@ public final class ActionExecutor {
 
     devCard = p.removeDevelopmentCard(DevelopmentCard.ROAD_BUILDING);
 
-    assert devCard == DevelopmentCard.ROAD_BUILDING : 
-        "ERROR: Development Card Road Building could not be played; " 
-        + "not available in player" 
-        + p.getId() 
-        + " hand.";
+    if (devCard != DevelopmentCard.ROAD_BUILDING) {
+      return false;
+    }
 
     Road road1 = new Road(
         amd.getRelevantMetadata()[0],
@@ -453,8 +481,17 @@ public final class ActionExecutor {
     Road road2 = new Road(
         amd.getRelevantMetadata()[1],
         p.getId());
-    return this.game.getBoard().placeRoad(road1)
-        && this.game.getBoard().placeRoad(road2);
+
+    if (!this.game.getBoard().canPlaceRoad(road1) 
+          || !this.game.getBoard().canPlaceRoad(road2)
+          || p.getRemainingRoads() < 2) {
+      return false;
+    } else {
+      this.game.getBoard().placeRoad(road1);
+      this.game.getBoard().placeRoad(road2);
+      p.setRemainingRoads(p.getRemainingRoads() - 2);
+      return true;
+    }
   }
 
   /**
@@ -473,11 +510,9 @@ public final class ActionExecutor {
 
     devCard = p.removeDevelopmentCard(DevelopmentCard.MONOPOLY);
 
-    assert devCard == DevelopmentCard.MONOPOLY : 
-        "ERROR: Development Card Monopoly could not be played; " 
-        + "not available in player '" 
-        + p.getId() 
-        + "' hand.";
+    if (devCard == DevelopmentCard.MONOPOLY) {
+      return false;
+    }
 
     ResourceCard monopolyResource = ResourceCard.valueOf(amd.getRelevantMetadata()[0]).get();
     for (Player player : this.game.getPlayers()) {
@@ -506,14 +541,13 @@ public final class ActionExecutor {
 
     devCard = p.removeDevelopmentCard(DevelopmentCard.YEAR_OF_PLENTY);
 
-    assert devCard == DevelopmentCard.YEAR_OF_PLENTY
-        : "ERROR: Development Card 'Year of Plenty' could not be played; " 
-            + "not available in player '" 
-            + p.getId() 
-            + "' hand.";
+    if (devCard != DevelopmentCard.YEAR_OF_PLENTY) {
+      return false;
+    }
 
     ResourceCard res1;
     ResourceCard res2;
+    // TODO: This is jank, fix this.
     if (ResourceCard.valueOf(amd.getRelevantMetadata()[0]).isPresent()) {
       res1 = ResourceCard.valueOf(amd.getRelevantMetadata()[0]).get();
     } else {
@@ -561,15 +595,16 @@ public final class ActionExecutor {
     if (!p.getResourceCards().containsAll(Arrays.asList(requiredResources))) {
       return false;
     }
-
-    List<ResourceCard> takenCards = p.takeAllCardsFromHand(Arrays.asList(requiredResources));
-
-    assert takenCards.containsAll(Arrays.asList(requiredResources)) : 
-        "ERROR: Not all resources taken from hand.";
-
     if (!this.game.getDealer().canDrawDevelopmentCard()) {
       return false;
     }
+
+    List<ResourceCard> takenCards = p.takeAllCardsFromHand(Arrays.asList(requiredResources));
+
+    if (!takenCards.containsAll(Arrays.asList(requiredResources))) {
+      return false;
+    }
+
     p.addDevelopmentCard(this.game.getDealer().drawDevelopmentCard());
     return true;
   }
@@ -624,6 +659,9 @@ public final class ActionExecutor {
     int playerIndex = amd.getRelevantMetadata()[1];
 
     // Validity of tile placement check.
+    if (tileIndex > 18) {
+      return false;
+    }
     Tile tileToBlock = this.game.getBoard().getTiles().get(tileIndex);
     if (tileToBlock.isBlocked()) {
       return false;
@@ -669,7 +707,9 @@ public final class ActionExecutor {
     // Current cards in players hand
     List<ResourceCard> currentCards = p.getResourceCards();
     // Sanity check
-    if (currentCards.size() <= 7) {
+    if (currentCards.size() <= 7 || this.game.getLastDiceRollValue() != 7 || p.hasDiscardedThisTurn()) {
+      return false;
+    } else if (true) {
       return false;
     }
 
@@ -703,6 +743,7 @@ public final class ActionExecutor {
    * Make players with more than 7 cards discard half of their cards.
    */
   public GameState makePlayersDiscard() {
+    // TODO: Change this.
     this.game.getPlayers().forEach((player) -> {
       if (player.getResourceCards().size() > 7) {
         this.makePlayerDiscard(player, game.getCurrentGameState());
