@@ -18,7 +18,10 @@ public final class DeterministicPlayer extends Player {
 
   @Override
   public int[] play(GameState gameState) {
-    int[] move = this.moveMetadatas.poll();
+    // int[] move = this.moveMetadatas.poll();
+    int[] move = this.moveMetadatas.remove();
+    ActionMetadata metadata = new ActionMetadata(move);
+    this.previousAction = metadata;
     return move;
   }
 
@@ -41,5 +44,9 @@ public final class DeterministicPlayer extends Player {
     for (int i = 0; i < metadata.length; i++) {
       this.moveMetadatas.add(metadata[i].getMetadata());
     }
+  }
+
+  public int[] getNextMoveMetadata() {
+    return this.moveMetadatas.peek();
   }
 }
