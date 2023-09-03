@@ -415,6 +415,7 @@ public final class GameState {
     };
     map.put("orderOfCards", orderOfCards);
     map.put("actionID", new int[][] {{this.lastAction}});
+    map.put("finished", new int[][] {{this.game.hasEnded() ? 1 : 0}});
 
     return map;
   }
