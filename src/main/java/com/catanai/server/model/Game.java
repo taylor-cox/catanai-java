@@ -34,6 +34,7 @@ public final class Game {
   private State currentState;
   private Settlement previousSettlement;
   private Action lastAction;
+  private boolean lastActionSuccessful;
 
   private enum State {
     START_BUILD, START_ROAD, START2_BUILD, START2_ROAD, BUSINESS_AS_USUAL, TRADE
@@ -83,37 +84,47 @@ public final class Game {
 
   private boolean currentPlayerMakeMove() {
     boolean toReturn = false;
-    if (this.currentState == State.START_BUILD && this.lastAction != null) {
+    if (this.currentState == State.START_BUILD && this.lastAction != null && this.lastActionSuccessful) {
       this.currentPlayer = this.players.get(this.currentPlayer.getId().getValue());
-    } else if (this.currentState == State.START2_BUILD && this.gameStates.size() > 9) {
+    } else if (this.currentState == State.START2_BUILD && this.gameStates.size() > 9 && this.lastAction != null && this.lastActionSuccessful) {
       this.currentPlayer = this.players.get(this.currentPlayer.getId().getValue() - 2);
+    } else if(this.currentState == State.BUSINESS_AS_USUAL 
+        && this.gameStates.size() > 17
+        && this.lastAction != null
+        && this.lastAction == Action.END_TURN) {
+      this.currentPlayer = this.players.get((this.currentPlayer.getId().getValue() % 4));
     }
     switch (this.currentState) {
       case START_BUILD:
-        toReturn |= handleStartBuild();
+        toReturn = handleStartBuild();
         break;
       case START_ROAD:
-        toReturn |=  handleStartRoad();
+        toReturn =  handleStartRoad();
         break;
       case START2_BUILD:
-        toReturn |=  handleStartBuild2();
+        toReturn =  handleStartBuild2();
         break;
       case START2_ROAD:
-        toReturn |=  handleStartRoad2();
+        toReturn =  handleStartRoad2();
         break;
       case BUSINESS_AS_USUAL:
-        toReturn |=  handleMove();
+        toReturn =  handleMove();
         break;
       default:
-        toReturn |=  false;
+        toReturn =  false;
         break;
     }
+    lastActionSuccessful = toReturn;
     return toReturn;
   }
 
   private boolean handleMove() {
     if (this.gameStates.size() >= 16 && this.lastAction == Action.END_TURN) {
       int diceRoll = this.rollDice();
+      if (diceRoll == 7) {
+        // TODO: Remove this when we have a way to move the robber.
+        diceRoll = 8;
+      }
       if (diceRoll != 7) {
         this.produce(diceRoll);
       } else {
@@ -126,6 +137,9 @@ public final class Game {
     this.lastAction = amd.getAction();
     if (!this.actionExecutor.doAction(amd, this.currentPlayer)) {
       return false;
+    }
+    if(this.currentPlayer.getVictoryPoints() >= 10) {
+      this.ended = true;
     }
     this.updateGamestate();
     return true;
@@ -261,7 +275,7 @@ public final class Game {
               resourceAmt = 2;
             }
 
-            Player p = this.players.get(n.getBuilding().getPlayerId().getValue());
+            Player p = this.players.get(n.getBuilding().getPlayerId().getValue() - 1);
             resources.putIfAbsent(p, new HashMap<Terrain, Integer>());
             resources.get(p).merge(
                 t.getTerrain(),
