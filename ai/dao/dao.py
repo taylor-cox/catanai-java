@@ -40,3 +40,12 @@ class GameStateDAO:
     self.s.add(gamestateToAdd)
     self.s.commit()
     self.s.close()
+
+  def getLargestGameID(self) -> int:
+    self.recreate_session()
+    largestGamesState = self.s.query(GameState).order_by(GameState.game_id.desc()).first()
+    largestGameID = -1
+    if largestGamesState is not None:
+      largestGameID = largestGamesState.game_id.value
+    self.s.close()
+    return largestGameID
