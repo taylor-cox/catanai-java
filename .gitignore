@@ -40,3 +40,7 @@ node_modules/
 venv/
 __pycache__/
 tmp/
+
+### Examples ###
+ai/main_test.py
+ai/ppo_torch.py
