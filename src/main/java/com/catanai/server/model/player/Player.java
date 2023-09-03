@@ -26,6 +26,7 @@ public abstract class Player {
   protected int numKnightsPlayed;
   protected ArrayList<DevelopmentCard> developmentCardsDrawnThisTurn;
   protected ActionMetadata previousAction;
+  protected boolean hasDiscardedThisTurn;
   
   /**
    * Initializes all player variables.
@@ -44,6 +45,7 @@ public abstract class Player {
     this.knownCards = new ArrayList<ResourceCard>();
     this.hasFinishedTurn = false;
     this.numKnightsPlayed = 0;
+    this.hasDiscardedThisTurn = false;
   }
 
   /**
@@ -52,23 +54,6 @@ public abstract class Player {
   * @return the action the player chose.
   */
   public abstract int[] play(GameState gameState);
-
-  /**
-   * Reset class to basic values.
-   */
-  public void reset() {
-    this.resourceCards = new ArrayList<ResourceCard>();
-    this.developmentCards = new ArrayList<DevelopmentCard>();
-    this.remainingSettlements = 5;
-    this.remainingCities = 4;
-    this.remainingRoads = 15;
-    this.largestArmy = false;
-    this.longestRoad = false;
-    this.victoryPoints = 0;
-    this.knownCards = new ArrayList<ResourceCard>();
-    this.hasFinishedTurn = false;
-    this.numKnightsPlayed = 0;
-  }
   
   /**
   * Takes all the cards of type rc from the player's hand.
@@ -205,6 +190,14 @@ public abstract class Player {
   public List<ResourceCard> getKnownCards() {
     return this.knownCards;
   }
+
+  public ActionMetadata getPreviousAction() {
+    return this.previousAction;
+  }
+
+  public boolean hasDiscardedThisTurn() {
+    return this.hasDiscardedThisTurn;
+  }
   
   /**
    * Removes the resource card @param c from hand.
@@ -244,6 +237,10 @@ public abstract class Player {
       this.developmentCards.addAll(this.developmentCardsDrawnThisTurn);
       this.developmentCardsDrawnThisTurn.clear();
     }
+  }
+
+  public void setHasDiscardedThisTurn(boolean hasDiscardedThisTurn) {
+    this.hasDiscardedThisTurn = hasDiscardedThisTurn;
   }
   
   public int getNumKnightsPlayed() {
