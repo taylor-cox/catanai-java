@@ -3,10 +3,14 @@ package com.catanai.server.config;
 import com.catanai.server.model.Game;
 import com.catanai.server.model.player.DeterministicPlayer;
 import com.catanai.server.model.player.PlayerId;
+import com.catanai.server.model.player.action.Action;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+
 import org.json.JSONArray;
 
 /**
@@ -28,7 +32,7 @@ public class SocketCommandHandler {
       case "newGame":
         return this.handleNewGame();
       case "getCurrentGamestate":
-        return this.currentGameStateAsJSON();
+        return this.currentGameStateAsJSON(0);
       case "makeMove":
         return this.handleMakeMove();
       case "addPlayerMove":
@@ -55,8 +59,12 @@ public class SocketCommandHandler {
   }
 
   private String handleMakeMove() {
-    this.game.nextMove();
-    return this.currentGameStateAsJSON();
+    int reward = -1;
+    boolean successful = this.game.nextMove();
+    if (successful) {
+      reward = 1;
+    }
+    return this.currentGameStateAsJSON(reward);
   }
 
   private String handleNewGame() {
@@ -66,13 +74,18 @@ public class SocketCommandHandler {
     this.players.add(new DeterministicPlayer(PlayerId.THREE));
     this.players.add(new DeterministicPlayer(PlayerId.FOUR));
     this.game = new Game(players);
-    return this.currentGameStateAsJSON();
+    return this.currentGameStateAsJSON(0);
   }
 
-  private String currentGameStateAsJSON() {
+  private String currentGameStateAsJSON(Integer reward) {
+    int rewardToAdd = reward;
     ObjectMapper objectMapper = new ObjectMapper();
     try {
-      return objectMapper.writeValueAsString(this.game.getCurrentGameState().toMap());
+      Map<String, int[][]> gameStateMap = this.game.getCurrentGameState().toMap();
+      if (reward != 0) {
+        gameStateMap.put("reward", new int[][]{{reward}});
+      }
+      return objectMapper.writeValueAsString(gameStateMap);
     } catch (JsonProcessingException e) {
       e.printStackTrace();
       return "ERROR";
