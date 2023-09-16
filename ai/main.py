@@ -1,13 +1,13 @@
-import gym
-import numpy as np
-from ml.ppo import Agent
-from dao.dao import GameStateDAO
-from websockets.game_websockets import GameWebSocketHandler
-import json
-from websockets.game_response_parser import GameResponseParser
+# import gym
+# import numpy as np
+# from ml.ppo import Agent
+# from dao.dao import GameStateDAO
+# from websockets.game_websockets import GameWebSocketHandler
+# import json
+# from websockets.game_response_parser import GameResponseParser
 from game_trainer import GameTrainer
 
-import wandb
+# import wandb
 
 # def run_training():
 #   env = gym.make("CartPole-v1")
@@ -55,30 +55,32 @@ import wandb
 #       best_score = avg_score
 #       agent.save_models()
 
-#     print(f'--------------------------\nEpisode: {i}\nScore: {score}\nAverage Score: {avg_score}\nTime steps: {n_steps}\nLearning steps: {learn_iters}')
+#     print(f'----------------------
+#     ----\nEpisode: {i}\nScore: {score}\nAverage Score: {avg_score}\nTime
+#     steps: {n_steps}\nLearning steps: {learn_iters}')
 
 if __name__ == '__main__':
-  trainer = GameTrainer(True)
-  # trainer.run_training()
-  # gameStateDao = GameStateDAO()
-  # with GameWebSocketHandler('ws://192.168.1.108:8080/game') as websocketHandler:
-  #   gamestateString = websocketHandler.newGame()
-  #   # gameStateDao.addGamestate(gamestateString, 0)
-  #   allPlayersMoves = [
-  #     {'1': [ [2, 0],  [1, 0],  [2, 2],  [1, 4]]},
-  #     {'2': [ [2, 7],  [1, 10], [2, 10], [1, 17]]},
-  #     {'3': [ [2, 16], [1, 23], [2, 20], [1, 32]]},
-  #     {'4': [ [2, 33], [1, 49], [2, 37], [1, 53]]},
-  #   ]
+    trainer = GameTrainer(True)
+    # trainer.run_training()
+    # gameStateDao = GameStateDAO()
+    # with GameWebSocketHandler('ws://192.168.1.108:8080/game') as websocketHandler:
+    #   gamestateString = websocketHandler.newGame()
+    #   # gameStateDao.addGamestate(gamestateString, 0)
+    #   allPlayersMoves = [
+    #     {'1': [ [2, 0],  [1, 0],  [2, 2],  [1, 4]]},
+    #     {'2': [ [2, 7],  [1, 10], [2, 10], [1, 17]]},
+    #     {'3': [ [2, 16], [1, 23], [2, 20], [1, 32]]},
+    #     {'4': [ [2, 33], [1, 49], [2, 37], [1, 53]]},
+    #   ]
 
-  #   for player in allPlayersMoves:
-  #     for id in player:
-  #       for move in player[id]:
-  #         output = websocketHandler.addMove(playerID=id, action=move)
-  #         if json.loads(output)['success'] != True:
-  #           print(f'Error: {output}')
-    
-  #   for _ in range(16):
-  #     gamestateString = websocketHandler.makeMove()
-      # gameStateDao.addGamestate(gamestateString, 0)
-  pass
+    #   for player in allPlayersMoves:
+    #     for id in player:
+    #       for move in player[id]:
+    #         output = websocketHandler.addMove(playerID=id, action=move)
+    #         if json.loads(output)['success'] != True:
+    #           print(f'Error: {output}')
+
+    #   for _ in range(16):
+    #     gamestateString = websocketHandler.makeMove()
+    # gameStateDao.addGamestate(gamestateString, 0)
+    pass
