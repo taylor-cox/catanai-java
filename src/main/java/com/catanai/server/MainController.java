@@ -5,7 +5,7 @@ import com.catanai.server.model.board.graph.Node;
 import com.catanai.server.model.gamestate.GameState;
 import com.catanai.server.model.player.DeterministicPlayer;
 import com.catanai.server.model.player.Player;
-import com.catanai.server.model.player.PlayerId;
+import com.catanai.server.model.player.PlayerID;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.http.MediaType;
@@ -31,10 +31,10 @@ public class MainController {
   @ResponseBody
   public GameState randomGame() {
     List<Player> players = new ArrayList<Player>(4);
-    players.add(new DeterministicPlayer(PlayerId.ONE));
-    players.add(new DeterministicPlayer(PlayerId.TWO));
-    players.add(new DeterministicPlayer(PlayerId.THREE));
-    players.add(new DeterministicPlayer(PlayerId.FOUR));
+    players.add(new DeterministicPlayer(PlayerID.ONE));
+    players.add(new DeterministicPlayer(PlayerID.TWO));
+    players.add(new DeterministicPlayer(PlayerID.THREE));
+    players.add(new DeterministicPlayer(PlayerID.FOUR));
 
     int[][][] moves = new int[][][] {
       { {2, 0}, {1, 0}, {2, 2}, {1, 4} },
