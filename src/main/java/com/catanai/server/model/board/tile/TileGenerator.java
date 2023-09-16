@@ -62,9 +62,8 @@ public final class TileGenerator {
   * @return list of randomly rotated terrain chits.
   */
   private ArrayList<TerrainChit> randomlyRotateTerrainChits(ArrayList<TerrainChit> terrainChits) {
-    ArrayList<TerrainChit> randomlyRotatedChits = new ArrayList<TerrainChit>();
-    
-    // Generate lists representing "outer" and "inner" edges of board.
+
+      // Generate lists representing "outer" and "inner" edges of board.
     List<TerrainChit> outerEdge = terrainChits.subList(0, 12);
     List<TerrainChit> innerEdge = terrainChits.subList(12, 18);
     
@@ -75,13 +74,9 @@ public final class TileGenerator {
     // Rotate according to the random rotation.
     Collections.rotate(outerEdge, rotation * 2);
     Collections.rotate(innerEdge, rotation);
-    
-    for (TerrainChit rotated : outerEdge) {
-      randomlyRotatedChits.add(rotated);
-    }
-    for (TerrainChit rotated : innerEdge) {
-      randomlyRotatedChits.add(rotated);
-    }
+
+    ArrayList<TerrainChit> randomlyRotatedChits = new ArrayList<TerrainChit>(outerEdge);
+    randomlyRotatedChits.addAll(innerEdge);
     randomlyRotatedChits.add(terrainChits.get(17));
     
     return randomlyRotatedChits;
@@ -101,13 +96,9 @@ public final class TileGenerator {
     Collections.reverse(toReverseInnerEdge);
     
     reversedChits.add(terrainChits.get(0));
-    for (TerrainChit reversed : toReverseOuterEdge) {
-      reversedChits.add(reversed);
-    }
+    reversedChits.addAll(toReverseOuterEdge);
     reversedChits.add(terrainChits.get(13));
-    for (TerrainChit reversed : toReverseInnerEdge) {
-      reversedChits.add(reversed);
-    }
+    reversedChits.addAll(toReverseInnerEdge);
     reversedChits.add(terrainChits.get(17));
     
     return reversedChits;
