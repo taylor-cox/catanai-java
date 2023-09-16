@@ -35,7 +35,6 @@ public class MoveRobberExecutor implements SpecificActionExecutor {
   private boolean moveRobber(ActionMetadata amd, Player p) {
     int tileIndex = amd.getRelevantMetadata()[0];
     int playerIDToStealFrom = amd.getRelevantMetadata()[1];
-    System.out.println(amd.getRelevantMetadata()[0] + ", " + amd.getRelevantMetadata()[1]);
 
     // Cannot play another dev card if one was already played this turn.
     if (tileIndex > 18 || tileIndex < 0) {

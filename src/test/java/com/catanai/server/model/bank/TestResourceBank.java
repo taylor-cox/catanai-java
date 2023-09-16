@@ -12,7 +12,7 @@ import org.junit.Test;
  */
 public class TestResourceBank {
   final List<ResourceCard> cards = Arrays.asList(ResourceCard.values());
-  final int sizeOfResourceBank = 19;
+  static final int sizeOfResourceBank = 19;
   
   @Test
   public void testResourceBankFunctionality() {

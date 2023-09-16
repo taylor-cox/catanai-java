@@ -15,7 +15,7 @@ public enum ResourceCard implements Card {
   
   private final int value;
 
-  private ResourceCard(int value) {
+  ResourceCard(int value) {
     this.value = value;
   }
   
@@ -36,6 +36,7 @@ public enum ResourceCard implements Card {
     Optional<ResourceCard> rc = Arrays.stream(values())
             .filter(resource -> resource.value == value)
             .findFirst();
-      return rc.orElse(null);
+    
+    return rc.orElse(null);
   }
 }

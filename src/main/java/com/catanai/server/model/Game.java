@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
@@ -94,8 +95,8 @@ public final class Game {
    * @param diceRoll the number of the dice roll
    */
   public void produce(int diceRoll) {
-    HashMap<Player, HashMap<Terrain, Integer>> resources = this.getResourcesToProduce(diceRoll);
-    HashMap<Terrain, Integer> amountToProduce = this.getAmountOfResourcesToProduce(resources);
+    Map<Player, Map<Terrain, Integer>> resources = this.getResourcesToProduce(diceRoll);
+    Map<Terrain, Integer> amountToProduce = this.getAmountOfResourcesToProduce(resources);
     Set<Terrain> doNotProduce = this.getResourcesUnableToProduce(resources, amountToProduce);
 
     // Give all players resources for the roll
@@ -120,10 +121,10 @@ public final class Game {
    * @return a map containing each player, and each terrain they are
    *         expecting production from
    */
-  private HashMap<Player, HashMap<Terrain, Integer>> getResourcesToProduce(
+  private Map<Player, Map<Terrain, Integer>> getResourcesToProduce(
       int diceRoll) {
     // Calculate the amount of resources which should be given to each player.
-    HashMap<Player, HashMap<Terrain, Integer>> resources = new HashMap<>();
+    Map<Player, Map<Terrain, Integer>> resources = new HashMap<>();
     for (Tile t : this.board.getTiles()) {
       if (t.getTerrainChit().getValue() == diceRoll) {
         for (Node n : t.getNodes()) {
@@ -158,8 +159,8 @@ public final class Game {
    * @return amount of resources needed to give all player's their expected
    *         resource income
    */
-  private HashMap<Terrain, Integer> getAmountOfResourcesToProduce(
-      HashMap<Player, HashMap<Terrain, Integer>> resources) {
+  private Map<Terrain, Integer> getAmountOfResourcesToProduce(
+      Map<Player, Map<Terrain, Integer>> resources) {
     // For each resource, determine the amount which the bank has to produce
     // to give to all players.
     HashMap<Terrain, Integer> amountToProduce = new HashMap<Terrain, Integer>();
@@ -183,8 +184,8 @@ public final class Game {
    * @return the set of terrains which cannot be produced
    */
   private Set<Terrain> getResourcesUnableToProduce(
-      HashMap<Player, HashMap<Terrain, Integer>> resources,
-      HashMap<Terrain, Integer> amountToProduce) {
+      Map<Player, Map<Terrain, Integer>> resources,
+      Map<Terrain, Integer> amountToProduce) {
     // Construct a set of resources which cannot be produced due to the
     // size of the resource bank being to small.
     Set<Terrain> doNotProduce = new HashSet<Terrain>();
@@ -254,7 +255,7 @@ public final class Game {
     return this.lastDiceRollValue;
   }
 
-  public void setPlayers(ArrayList<Player> players) {
+  public void setPlayers(List<Player> players) {
     this.players = players;
   }
 

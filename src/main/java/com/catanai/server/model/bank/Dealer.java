@@ -4,6 +4,7 @@ import com.catanai.server.model.bank.card.DevelopmentCard;
 import com.catanai.server.model.bank.card.ResourceCard;
 import com.catanai.server.model.board.tile.Terrain;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -97,6 +98,16 @@ public final class Dealer {
   }
 
   /**
+   * Returns the relevant resource bank for the given ResourceCard, c.
+   *
+   * @param c resource card associated with bank
+   * @return the relevant bank to the given terrain.
+   */
+  private ResourceBank getAssociatedBank(ResourceCard c) {
+    return this.getResourceBanks().get(c);
+  }
+
+  /**
    * Get the resource card associated with the terrain t.
    *
    * @param t terrain to get associated resource of.
@@ -119,16 +130,6 @@ public final class Dealer {
       default:
         return null;
     }
-  }
-
-  /**
-   * Returns the relevant resource bank for the given ResourceCard, c.
-   *
-   * @param c resource card associated with bank
-   * @return the relevant bank to the given terrain.
-   */
-  private ResourceBank getAssociatedBank(ResourceCard c) {
-    return this.getResourceBanks().get(c);
   }
 
   /**
@@ -204,7 +205,7 @@ public final class Dealer {
    *
    * @return map between resource card and associated bank.
    */
-  public HashMap<ResourceCard, ResourceBank> getResourceBanks() {
+  public Map<ResourceCard, ResourceBank> getResourceBanks() {
     HashMap<ResourceCard, ResourceBank> resourceBanks = new HashMap<>();
     resourceBanks.put(ResourceCard.BRICK, this.brickBank);
     resourceBanks.put(ResourceCard.ORE, this.oreBank);

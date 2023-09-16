@@ -2,7 +2,6 @@ package com.catanai.server.model.player;
 
 import com.catanai.server.model.action.ActionMetadata;
 import com.catanai.server.model.gamestate.GameState;
-
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -41,8 +40,8 @@ public final class DeterministicPlayer extends Player {
    * @param metadata metadata refering to next move.
    */
   public void setNextMoveMetadata(ActionMetadata[] metadata) {
-    for (int i = 0; i < metadata.length; i++) {
-      this.moveMetadatas.add(metadata[i].getMetadata());
+    for (ActionMetadata meta : metadata) {
+      this.moveMetadatas.add(meta.getMetadata());
     }
   }
 

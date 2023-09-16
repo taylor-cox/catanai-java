@@ -3,10 +3,9 @@ package com.catanai.server.model.action;
 import com.catanai.server.model.Game;
 import com.catanai.server.model.player.Player;
 import com.catanai.server.model.player.PlayerID;
-import lombok.Getter;
-
 import java.util.LinkedList;
 import java.util.Queue;
+import lombok.Getter;
 
 /**
  * Handles state transitions for ActionState.
@@ -125,7 +124,9 @@ public final class ActionStateMachine {
   private ActionState handleActionStateDiceRoll() {
     // If the dice roll is a 7, players must discard and current player must move robber.
     if (this.game.getLastDiceRollValue() == 7) {
-      if (getPlayersToDiscard()) return ActionState.MOVE_ROBBER;
+      if (getPlayersToDiscard()) {
+        return ActionState.MOVE_ROBBER;
+      }
       return ActionState.DISCARD;
     }
 
@@ -165,7 +166,9 @@ public final class ActionStateMachine {
     // Check if any players have to discard, and if so,
     // make those players discard.
     if (this.playersToDiscard == null) {
-      if (getPlayersToDiscard()) return ActionState.MOVE_ROBBER;
+      if (getPlayersToDiscard()) {
+        return ActionState.MOVE_ROBBER;
+      }
     }
 
     // Get the next player to discard.

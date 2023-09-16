@@ -15,7 +15,7 @@ public enum PlayerID {
   
   private final int value;
 
-  private PlayerID(int value) {
+  PlayerID(int value) {
     this.value = value;
   }
   
@@ -38,7 +38,7 @@ public enum PlayerID {
     List<PlayerID> possiblePlayerIds = Arrays.stream(values())
         .filter(resource -> resource.value == value)
         .collect(Collectors.toList());
-    if (possiblePlayerIds.size() <= 0) {
+    if (possiblePlayerIds.isEmpty()) {
       return null;
     } else {
       return possiblePlayerIds.get(0);

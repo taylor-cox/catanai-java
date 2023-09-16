@@ -46,6 +46,11 @@ public class KnightExecutor implements SpecificActionExecutor {
       return false;
     }
 
+    // Ensure player id is valid.
+    if (playerIDToStealFrom > 5 || playerIDToStealFrom < 1) {
+      return false;
+    }
+
     // Get nodes next to the tile
     Player playerToStealFrom = this.game.getPlayerByID(Objects.requireNonNull(PlayerID.valueOf(playerIDToStealFrom)));
     List<Node> nodesOnTileWithBuildingsFromPlayerToStealFrom = 

@@ -107,7 +107,7 @@ public final class GameState {
   *   -> Tile 1 has terrain 2 and terrain chit 5
   */
   private void populateTiles() {
-    ArrayList<Tile> tiles = game.getBoard().getTiles();
+    List<Tile> tiles = game.getBoard().getTiles();
     for (int i = 0; i < tiles.size(); i++) {
       Tile curTile = tiles.get(i);
       this.tiles[i] = new int[] {
@@ -129,7 +129,7 @@ public final class GameState {
   *   -> the development bank has a size of 7
   */
   private void populateBanks() {
-    HashMap<ResourceCard, ResourceBank> banks = this.game.getDealer().getResourceBanks();
+    Map<ResourceCard, ResourceBank> banks = this.game.getDealer().getResourceBanks();
     ResourceCard[] orderOfBanks = {
       ResourceCard.WOOL,
       ResourceCard.GRAIN,
@@ -223,7 +223,7 @@ public final class GameState {
   * etc... for all 72 possible edges on the board.
   */
   private void populateEdges() {
-    ArrayList<Edge> gameEdges = this.game.getBoard().getEdges();
+    List<Edge> gameEdges = this.game.getBoard().getEdges();
     for (int i = 0; i < this.edges.length; i++) {
       if (!gameEdges.get(i).hasRoad()) {
         this.edges[i] = 0;
@@ -244,7 +244,7 @@ public final class GameState {
   * etc... for all 54 possible nodes on the board.
   */
   private void populateNodes() {
-    ArrayList<Node> boardNodes = this.game.getBoard().getNodes();
+    List<Node> boardNodes = this.game.getBoard().getNodes();
     for (int i = 0; i < this.nodes.length; i++) {
       if (!boardNodes.get(i).hasBuilding()) {
         this.nodes[i] = new int[] { 0, 0 };
@@ -268,7 +268,7 @@ public final class GameState {
   * etc... for all 9 ports on the board.
   */
   private void populatePorts() {
-    ArrayList<Node> nodes = this.game.getBoard().getNodes();
+    List<Node> nodes = this.game.getBoard().getNodes();
     int[] nodeWithPortIndexes = {
       0, 1, 10, 11, 26, 33, 42, 47, 49
     };

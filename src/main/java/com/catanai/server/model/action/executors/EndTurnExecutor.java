@@ -10,7 +10,10 @@ import org.jetbrains.annotations.NotNull;
  * Class which validates and executes end turn action in game of Catan.
  */
 public class EndTurnExecutor implements SpecificActionExecutor {
+  Game game;
+  
   public EndTurnExecutor(Game game) {
+    this.game = game;
   }
 
   @Override

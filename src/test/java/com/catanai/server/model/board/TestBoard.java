@@ -5,7 +5,7 @@ import com.catanai.server.model.board.building.Road;
 import com.catanai.server.model.board.building.Settlement;
 import com.catanai.server.model.board.tile.Tile;
 import com.catanai.server.model.player.PlayerID;
-import java.util.ArrayList;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -219,7 +219,7 @@ public class TestBoard {
     int robberIndex = board.getTileIndexCurrentlyBlocked();
     Assert.assertTrue(board.getTiles().get(robberIndex).isBlocked());
     Assert.assertFalse(board.placeRobber(robberIndex));
-    ArrayList<Tile> tiles = board.getTiles();
+    List<Tile> tiles = board.getTiles();
     for (int i = 0; i < tiles.size(); i++) {
       if (i == robberIndex) {
         continue;

@@ -8,13 +8,12 @@ import com.catanai.server.model.board.building.Settlement;
 import com.catanai.server.model.board.graph.Edge;
 import com.catanai.server.model.board.graph.Node;
 import com.catanai.server.model.gamestate.GameState;
-import lombok.Getter;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import lombok.Getter;
 
 /**
 * Represents a Catan player.
@@ -32,7 +31,7 @@ public abstract class Player {
   @Getter
   protected List<DevelopmentCard> developmentCards;
   @Getter
-  protected ArrayList<DevelopmentCard> developmentCardsDrawnThisTurn;
+  protected List<DevelopmentCard> developmentCardsDrawnThisTurn;
   protected boolean playedDevelopmentCardThisTurn;
 
   @Getter
@@ -189,6 +188,13 @@ public abstract class Player {
     return this.resourceCards.get(card) >= amount;
   }
   
+  /**
+   * Removes all of the specified card from the player's hand, and returns the 
+   * amount of that card they had.
+   *
+   * @param card resource to remove from player's hand
+   * @return amount of resource removed from player's hand
+   */
   public int removeAllOfOneCardFromHand(ResourceCard card) {
     if (this.resourceCards.containsKey(card)) {
       int numCards = this.resourceCards.get(card);
@@ -391,5 +397,10 @@ public abstract class Player {
     
     final Player other = (Player) o;
     return this.id == other.id;
+  }
+
+  @Override
+  public int hashCode() {
+    return this.id.hashCode();
   }
 }

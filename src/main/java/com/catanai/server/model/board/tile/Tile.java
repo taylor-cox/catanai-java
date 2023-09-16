@@ -2,6 +2,7 @@ package com.catanai.server.model.board.tile;
 
 import com.catanai.server.model.board.graph.Node;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
 * Represents a board tile.
@@ -9,7 +10,7 @@ import java.util.ArrayList;
 public final class Tile {
   private Terrain terrain;
   private TerrainChit terrainChit;
-  private ArrayList<Node> nodes;
+  private List<Node> nodes;
   private boolean blocked;
   
   /**
@@ -62,7 +63,7 @@ public final class Tile {
     return true;
   }
   
-  public ArrayList<Node> getNodes() {
+  public List<Node> getNodes() {
     return this.nodes;
   }
 }

@@ -9,17 +9,17 @@ import java.util.Random;
 * Generates a randomized set of tiles for a catan game.
 */
 public final class TileGenerator {
-  private final int numTiles = 19;
+  private static final int numTiles = 19;
   
   /**
   * Get a list of randomized tiles (terrain and chit values).
   *
   * @return list of randomized tiles.
   */
-  public ArrayList<Tile> getRandomizedTiles() {
-    ArrayList<Tile> tiles = new ArrayList<Tile>(numTiles);
-    ArrayList<Terrain> terrains = this.getShuffledTerrainList();
-    ArrayList<TerrainChit> terrainChits = this.getTerrainChitList();
+  public List<Tile> getRandomizedTiles() {
+    List<Tile> tiles = new ArrayList<Tile>(numTiles);
+    List<Terrain> terrains = this.getShuffledTerrainList();
+    List<TerrainChit> terrainChits = this.getTerrainChitList();
     
     assert terrainChits.size() == terrains.size() - 1 : 
       "Terrains does not match terrains chit size. Cannot instantiate.";
@@ -61,9 +61,8 @@ public final class TileGenerator {
   * @param terrainChits terrain chit list to randomly rotate
   * @return list of randomly rotated terrain chits.
   */
-  private ArrayList<TerrainChit> randomlyRotateTerrainChits(ArrayList<TerrainChit> terrainChits) {
-
-      // Generate lists representing "outer" and "inner" edges of board.
+  private List<TerrainChit> randomlyRotateTerrainChits(List<TerrainChit> terrainChits) {
+    // Generate lists representing "outer" and "inner" edges of board.
     List<TerrainChit> outerEdge = terrainChits.subList(0, 12);
     List<TerrainChit> innerEdge = terrainChits.subList(12, 18);
     
@@ -88,7 +87,7 @@ public final class TileGenerator {
   * @param terrainChits the terrain chits to reverse.
   * @return hexagonally reversed list of terrain chits.
   */
-  private ArrayList<TerrainChit> reverseTerrainChitPlacement(ArrayList<TerrainChit> terrainChits) {
+  private List<TerrainChit> reverseTerrainChitPlacement(List<TerrainChit> terrainChits) {
     ArrayList<TerrainChit> reversedChits = new ArrayList<TerrainChit>();
     List<TerrainChit> toReverseOuterEdge = terrainChits.subList(1, 12);
     Collections.reverse(toReverseOuterEdge);
@@ -109,7 +108,7 @@ public final class TileGenerator {
   *
   * @return shuffled list of all terrains on a board.
   */
-  private ArrayList<Terrain> getShuffledTerrainList() {
+  private List<Terrain> getShuffledTerrainList() {
     ArrayList<Terrain> terrains = new ArrayList<Terrain>();
     
     // Add four of forest, field and pasture
@@ -139,7 +138,7 @@ public final class TileGenerator {
   *
   * @return ordered list of terrain chits.
   */
-  private ArrayList<TerrainChit> getTerrainChitList() {
+  private List<TerrainChit> getTerrainChitList() {
     ArrayList<TerrainChit> terrainChits = new ArrayList<TerrainChit>();
     
     // Add terrain chits in order, starting from one corner.

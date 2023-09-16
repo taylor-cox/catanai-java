@@ -18,8 +18,8 @@ public class TestDealer {
   Dealer dealer;
   final List<ResourceCard> resourceCards = Arrays.asList(ResourceCard.values());
   final List<Terrain> terrains = Arrays.asList(Terrain.values());
-  final int numDevCards = 25;
-  final int numResCards = 19;
+  static final int numDevCards = 25;
+  static final int numResCards = 19;
   
   @Before
   public void setUp() {

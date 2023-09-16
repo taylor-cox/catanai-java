@@ -8,12 +8,11 @@ import com.catanai.server.model.board.building.Road;
 import com.catanai.server.model.board.building.Settlement;
 import com.catanai.server.model.board.graph.Edge;
 import com.catanai.server.model.player.Player;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Class which validates and executes build road action in game of Catan.
@@ -144,11 +143,12 @@ public class RoadExecutor implements SpecificActionExecutor {
 
     for (Edge e : playerRoadEdges) {
       List<Edge> visitedEdges = new ArrayList<>();
-      pathLengths.add(this.findPathLength(e, visitedEdges));
+      pathLengths.addAll(this.findPathLength(e, visitedEdges));
     }
 
     Optional<Integer> maxPathLength = pathLengths.stream()
-            .max(Integer::compare);
+            .map(Integer::intValue)
+            .max((o1, o2) -> Integer.compare(o1, o2));
 
     if (maxPathLength.isEmpty()) {
       return false;
@@ -172,12 +172,14 @@ public class RoadExecutor implements SpecificActionExecutor {
     return false;
   }
 
-  private int findPathLength(@NotNull Edge e, List<Edge> visitedEdges) {
+  private List<Integer> findPathLength(@NotNull Edge e, List<Edge> visitedEdges) {
+    List<Integer> pathLengths = new ArrayList<Integer>(); 
     List<Edge> connectedEdges = e.getNodes().stream()
         .flatMap(n -> n.getConnectedEdges().stream())
         .filter(edge -> edge != e)
         .filter(Edge::hasRoad)
         .filter(edge -> edge.getRoad().getPlayerId() == e.getRoad().getPlayerId())
+        .filter(edge -> !visitedEdges.contains(edge))
         .collect(Collectors.toList());
     
     for (Edge connectedEdge : connectedEdges) {
@@ -185,9 +187,9 @@ public class RoadExecutor implements SpecificActionExecutor {
         continue;
       }
       visitedEdges.add(connectedEdge);
-      return 1 + this.findPathLength(e, visitedEdges);
+      pathLengths.addAll(this.findPathLength(e, visitedEdges).stream().map(i -> i + 1).collect(Collectors.toList()));
     }
 
-    return 1;
+    return pathLengths;
   }
 }

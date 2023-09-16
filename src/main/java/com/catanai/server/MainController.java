@@ -65,7 +65,8 @@ public class MainController {
 
   @GetMapping(path = "/nodeEdgeMappings", produces = MediaType.APPLICATION_JSON_VALUE)
   @ResponseBody
-  public ArrayList<Node> nodeTileMappings() {
-    return null;
+  public List<Node> nodeTileMappings() {
+    // return null;
+    return new ArrayList<Node>();
   }
 }
