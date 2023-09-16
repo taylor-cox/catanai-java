@@ -8,26 +8,26 @@ import torch as T
 from typing import Dict, List, Tuple
 
 class AgentTrainer:
-  def __init__(self, agent_id: str):
-    self.N = 55
-    self.batch_size = 11
-    self.n_epochs = 5
-    self.alpha = 0.0003
-    self.best_score = 0.0
-    self.score_history = []
-    self.learn_iters = 0
-    self.avg_score = 0.0
-    self.n_steps = 0
-    self.score: int = 0
+  def __init__(self):
+    self.N: int = 55
+    self.batch_size: int = 11
+    self.n_epochs: int = 5
+    self.alpha: float = 0.0003
+    self.best_score: float = 0.0
+    self.score_history: List[float] = []
+    self.learn_iters: int = 0
+    self.avg_score: float = 0.0
+    self.n_steps: int = 0
+    self.score: float = 0
     self.starting_turn_counter: int = 0
+    self.player_id: str = '1'
 
     self.agent = Agent(
       n_actions=11,
       batch_size=self.batch_size,
       alpha=self.alpha,
       n_epochs=self.n_epochs,
-      input_dims=(286, ),
-      agent_id=agent_id
+      input_dims=(286, )
     )
 
 class GameTrainer:
@@ -35,132 +35,102 @@ class GameTrainer:
     self.game_state_dao: GameStateDAO = GameStateDAO()
     self.game_websocket_handler: GameWebSocketHandler = GameWebSocketHandler('ws://127.0.0.1:8080/game')
     self.game_response_parser: GameResponseParser = GameResponseParser()
-    self._init_training_variables()
+
+    # Set up agent trainers.
+    self.current_game_number: int = 0
+    self.n_games: int = 10_000
+    self.agent_trainer = AgentTrainer()
+
+    # Start training if immediately_run_training is True.
     if immediately_run_training:
       self.run_training()
   
   def run_training(self):
     self._run_training_loop()
   
-  def _init_training_variables(self):
-    self.n_games: int = 10_000
-    self.agent_trainers = {
-      '1': AgentTrainer('1'),
-      '2': AgentTrainer('2'),
-      '3': AgentTrainer('3'),
-      '4': AgentTrainer('4')
-    }
-  
   def _run_training_loop(self):
     for i in range(self.n_games):
+      self.current_game_number = i
+      # Open the websocket connection.
       with self.game_websocket_handler as game_websocket_handler:
-        # Create new game.
-        gameStateStr: str = self.game_websocket_handler.newGame()
-        self.game_response_parser.setMessage(gameStateStr)
-        self.game_state_dao.addGamestate(gameStateStr, i)
-
-        # Get observation of current game state (i.e. 1D array).
-        observation: np.ndarray = self.game_response_parser.getGameStateAsObservation()
-
-        # Set starting agent.
-        agent_key: str = '1'
-        current_agent: AgentTrainer = self.agent_trainers[agent_key]
+        # Create new game, and get the observation of the current game state.
+        observation: np.ndarray = self._new_game(game_websocket_handler)
         done: bool = False
 
-        # First starting turn round robin.
-        for i in range(4):
-          done, observation = self._run_player_loop(current_agent, game_websocket_handler, observation, agent_key)
-          agent_key = str(int(agent_key) + 1)
-          if agent_key == '5':
-            agent_key = '4'
-          current_agent = self.agent_trainers[agent_key]
-
-
-        # Second starting turn round robin.
-        for i in range(4, 0, -1):
-          done, observation = self._run_player_loop(current_agent, game_websocket_handler, observation, agent_key)
-          agent_key = str(int(agent_key) - 1)
-          if agent_key == '0':
-            agent_key = '1'
-          current_agent = self.agent_trainers[agent_key]
-
-        # Game loop.
         while not done:
-          # Player turn loop.
-          done, observation = self._run_player_loop(current_agent, game_websocket_handler, observation, agent_key)
-          agent_key = str((int(agent_key) % 4) + 1)
-          current_agent = self.agent_trainers[agent_key]
+          # Have agent choose an action with probs and val.
+          action, probs, val = self.agent_trainer.agent.choose_action(observation)
+          # Convert action to list of ints.
+          action = [int(x) for x in action.tolist()]
 
-        for trainer_id in self.agent_trainers:
-          self.agent_trainers[trainer_id].score_history.append(self.agent_trainers[trainer_id].score)
-          self.agent_trainers[trainer_id].avg_score = float(np.mean(self.agent_trainers[trainer_id].score_history[-100:]))
+          # Make the move on the backend, and get the game state.
+          game_state: dict; observation_: np.ndarray; reward: float; done: bool
+          game_state, observation_, reward, done = self._make_move(action, self.agent_trainer, game_websocket_handler)
+          
+          # Update agent metadata, and learn if necessary.
+          self._update_agent(self.agent_trainer, observation, action, probs, val, reward, done)
 
-          if self.agent_trainers[trainer_id].avg_score > self.agent_trainers[trainer_id].best_score:
-            self.agent_trainers[trainer_id].best_score = self.agent_trainers[trainer_id].avg_score
-            self.agent_trainers[trainer_id].agent.save_models()
-      
+          # Update the observation to the new observation.
+          observation = observation_
+
+          # Print if the move was successful.
+          if game_state['reward'][0][0] == 1:
+            print(f'Player {self.agent_trainer.player_id} successfully played move!')
+            print(action)
+            self.game_state_dao.addGamestate(self.game_response_parser.getGameStateMessage(), self.current_game_number)
+          
+          # Update agent to act as next player
+          self.agent_trainer.player_id = self._get_next_player()
+
+        # Update the score history and avg score.
+        self.agent_trainer.score_history.append(self.agent_trainer.score)
+        self.agent_trainer.avg_score = float(np.mean(self.agent_trainer.score_history[-100:]))
+
+        # If the avg score is greater than the best score, save the models.
+        if self.agent_trainer.avg_score > self.agent_trainer.best_score:
+          self.agent_trainer.best_score = self.agent_trainer.avg_score
+          self.agent_trainer.agent.save_models()
+    
       print(f'--------------------------\nEpisode: {i}\n--------------------------')
 
-  def _run_player_loop(
-      self,
-      current_agent: AgentTrainer,
-      game_websocket_handler: GameWebSocketHandler,
-      observation: np.ndarray,
-      agentKey: str
-    ) -> Tuple[bool, np.ndarray]:
+  def _new_game(self, game_websocket_handler: GameWebSocketHandler) -> np.ndarray:
+    gameStateStr: str = game_websocket_handler.newGame()
+    self.game_response_parser.setMessage(gameStateStr)
+    self.game_state_dao.addGamestate(gameStateStr, self.current_game_number)
+    return self.game_response_parser.getGameStateAsObservation()
 
-    player_done: bool = False
-    done: bool = False
-    observation = observation
-    while not player_done:
-      # Have agent choose an action with probs and val.
-      action, probs, val = current_agent.agent.choose_action(observation)
-      action = [int(x) for x in action.tolist()]
-      action[0] += 1
-
-      if current_agent.starting_turn_counter > 5:
-        print(f'Player {current_agent.agent.agent_id} attempted move:\n{action}')
+  def _make_move(
+        self,
+        action: List[int],
+        current_agent: AgentTrainer,
+        game_websocket_handler: GameWebSocketHandler
+      ) -> Tuple[dict, np.ndarray, float, bool]:
+      currentAction = action.copy()
+      currentAction[0] += 1
 
       # Make move on backend.
-      game_websocket_handler.addMove(action, current_agent.agent.agent_id)
-      self.game_response_parser.setMessage(game_websocket_handler.makeMove())
+      game_websocket_handler.addMove(currentAction, current_agent.player_id)
+      gameStateStr: str = game_websocket_handler.makeMove()
+      self.game_response_parser.setMessage(gameStateStr)
+      toReturn: Tuple[dict, np.ndarray, float, bool] = (
+        self.game_response_parser.getGameState(),
+        self.game_response_parser.getGameStateAsObservation(),
+        self.game_response_parser.getReward(),
+        self.game_response_parser.getGameDone()
+      )
+      currentAction[0] -= 1
+      return toReturn
 
-      action[0] -= 1
+  def _get_next_player(self) -> str:
+    return str(self.game_response_parser.getGameState()['currentPlayer'][0][0])
 
-      # Get dict of response from backend message.
-      game_state: dict = self.game_response_parser.getGameState()
-      
-      # Get the observation of the gamestate after the move.
-      observation_ = self.game_response_parser.getGameStateAsObservation()
-      reward: float = game_state['reward'][0][0]
-      done = game_state['finished'][0][0] == 1
+  def _update_agent(self, current_agent: AgentTrainer, observation: np.ndarray, action: List[int], probs: T.Tensor, val: T.Tensor, reward: float, done: bool):
+    # Update the number of steps for the agent, their current score, and remember the move + meta.
+    current_agent.n_steps += 1
+    current_agent.score += reward
+    current_agent.agent.remember(observation, action, probs, val, reward, done)
 
-      # Update the number of steps for the agent, their current score, and remember the move + meta.
-      current_agent.n_steps += 1
-      current_agent.score += int(reward)
-      current_agent.agent.remember(observation, action, probs, val, reward, done)
-
-      # If the number of steps is divisible by N, learn.
-      if (current_agent.n_steps % current_agent.N) == 0:
-        current_agent.agent.learn()
-        current_agent.learn_iters += 1
-
-      # Update the observation to the new observation.
-      observation = observation_
-
-      if game_state['reward'][0][0] == 1:
-        print(f'Player {current_agent.agent.agent_id} successfully played move!')
-        print(action)
-        self.game_state_dao.addGamestate(self.game_response_parser.getMessage(), current_agent.n_steps)
-        current_agent.starting_turn_counter += 1
-      
-      if (current_agent.starting_turn_counter == 2 \
-          or current_agent.starting_turn_counter == 5):
-        current_agent.starting_turn_counter += 1
-        player_done = True
-      
-      if action[0] == 13 and current_agent.starting_turn_counter > 5:
-        player_done = True
-      
-    return done, observation
-
+    # If the number of steps is divisible by N, learn.
+    if (current_agent.n_steps % current_agent.N) == 0:
+      current_agent.agent.learn()
+      current_agent.learn_iters += 1
