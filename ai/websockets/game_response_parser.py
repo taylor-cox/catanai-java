@@ -6,6 +6,7 @@ from itertools import chain
 class GameResponseParser:
   ''' Dictionary respresenting current game state. '''
   game_state: dict
+  game_state_message: str
 
   def __init__(self, message: str = ''):
     if message != '':
@@ -15,9 +16,19 @@ class GameResponseParser:
   
   def setMessage(self, message: str):
     self.game_state = json.loads(message)
+    self.game_state_message = message
   
   def getGameState(self) -> dict:
     return self.game_state
+
+  def getGameStateMessage(self) -> str:
+    return self.game_state_message
+  
+  def getReward(self) -> float:
+    return self.game_state['reward'][0][0]
+  
+  def getGameDone(self) -> bool:
+    return self.game_state['finished'][0][0] == 1
 
   def getGameStateAsObservation(self) -> np.ndarray:
     if self.game_state == {}:
