@@ -4,6 +4,7 @@ import com.catanai.server.model.bank.card.DevelopmentCard;
 import com.catanai.server.model.bank.card.ResourceCard;
 import com.catanai.server.model.board.tile.Terrain;
 import java.util.HashMap;
+import java.util.Objects;
 
 /**
  * Represents a dealer for all banks in a game of Catan.
@@ -67,7 +68,7 @@ public final class Dealer {
   */
   public boolean returnResource(Terrain t) {
     ResourceBank bank = this.getAssociatedBank(t);
-    return bank.addCard(this.getAssociatedResource(t));
+    return Objects.requireNonNull(bank).addCard(this.getAssociatedResource(t));
   }
 
   /**
@@ -88,6 +89,31 @@ public final class Dealer {
         return this.oreBank;
       case PASTURE:
         return this.woolBank;
+      case DESERT:
+        return null;
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * Get the resource card associated with the terrain t.
+   *
+   * @param t terrain to get associated resource of.
+   * @return the resource card associated with the terrain.
+   */
+  public ResourceCard getAssociatedResourceCard(Terrain t) {
+    switch (t) {
+      case FOREST:
+        return ResourceCard.LUMBER;
+      case FIELD:
+        return ResourceCard.GRAIN;
+      case HILL:
+        return ResourceCard.BRICK;
+      case MOUNTAIN:
+        return ResourceCard.ORE;
+      case PASTURE:
+        return ResourceCard.WOOL;
       case DESERT:
         return null;
       default:
