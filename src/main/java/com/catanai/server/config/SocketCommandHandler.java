@@ -2,14 +2,13 @@ package com.catanai.server.config;
 
 import com.catanai.server.model.Game;
 import com.catanai.server.model.player.DeterministicPlayer;
-import com.catanai.server.model.player.PlayerId;
-import com.catanai.server.model.player.action.Action;
+import com.catanai.server.model.player.PlayerID;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.json.JSONArray;
 
@@ -17,7 +16,6 @@ import org.json.JSONArray;
  * Socket command handler.
  */
 public class SocketCommandHandler {
-  String command;
   Game game;
   List<DeterministicPlayer> players;
 
@@ -43,18 +41,22 @@ public class SocketCommandHandler {
   }
 
   private String handleAddPlayerMove(String action, String playerID) {
-    DeterministicPlayer playerToAddActions = this.players
-      .stream()
-      .filter(player -> player.getId().toString().equals(playerID))
-      .findFirst()
-      .get();
+    Optional<DeterministicPlayer> playerToAddActions = this.players
+        .stream()
+        .filter(player -> player.getID().toString().equals(playerID))
+        .findFirst();
+
+    if (playerToAddActions.isEmpty()) {
+      throw new RuntimeException("Player of ID " + playerID + " to add actions to is not available in game.");
+    }
+
     JSONArray jsonActionArr = new JSONArray(action);
     int[] intActionArr = new int[jsonActionArr.length()];
     for (int i = 0; i < jsonActionArr.length(); ++i) {
       intActionArr[i] = jsonActionArr.optInt(i);
     }
 
-    playerToAddActions.addNextMove(intActionArr);
+    playerToAddActions.get().addNextMove(intActionArr);
     return "{\"success\": true}";
   }
 
@@ -69,22 +71,19 @@ public class SocketCommandHandler {
 
   private String handleNewGame() {
     this.players = new ArrayList<DeterministicPlayer>();
-    this.players.add(new DeterministicPlayer(PlayerId.ONE));
-    this.players.add(new DeterministicPlayer(PlayerId.TWO));
-    this.players.add(new DeterministicPlayer(PlayerId.THREE));
-    this.players.add(new DeterministicPlayer(PlayerId.FOUR));
+    this.players.add(new DeterministicPlayer(PlayerID.ONE));
+    this.players.add(new DeterministicPlayer(PlayerID.TWO));
+    this.players.add(new DeterministicPlayer(PlayerID.THREE));
+    this.players.add(new DeterministicPlayer(PlayerID.FOUR));
     this.game = new Game(players);
     return this.currentGameStateAsJSON(0);
   }
 
   private String currentGameStateAsJSON(Integer reward) {
-    int rewardToAdd = reward;
     ObjectMapper objectMapper = new ObjectMapper();
     try {
       Map<String, int[][]> gameStateMap = this.game.getCurrentGameState().toMap();
-      if (reward != 0) {
-        gameStateMap.put("reward", new int[][]{{reward}});
-      }
+      gameStateMap.put("reward", new int[][]{{reward}});
       return objectMapper.writeValueAsString(gameStateMap);
     } catch (JsonProcessingException e) {
       e.printStackTrace();
