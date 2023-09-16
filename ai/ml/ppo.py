@@ -100,17 +100,17 @@ class ActorNetwork(nn.Module):
 
     self.policy_outputs = nn.ModuleList(
       [
-        nn.Linear(512, 14),
+        nn.Linear(512, 15),
         nn.Linear(512, 72),
         nn.Linear(512, 72),
-        nn.Linear(512, 20),
-        nn.Linear(512, 20),
-        nn.Linear(512, 20),
-        nn.Linear(512, 20),
-        nn.Linear(512, 20),
-        nn.Linear(512, 20),
-        nn.Linear(512, 20),
-        nn.Linear(512, 20),
+        nn.Linear(512, 10),
+        nn.Linear(512, 10),
+        nn.Linear(512, 10),
+        nn.Linear(512, 10),
+        nn.Linear(512, 10),
+        nn.Linear(512, 10),
+        nn.Linear(512, 10),
+        nn.Linear(512, 10),
       ]
     )
 
@@ -196,7 +196,6 @@ class Agent:
       batch_size: int = 64,
       N: int = 2048,
       n_epochs: int = 10,
-      agent_id: str = '1'
     ) -> None:
     if input_dims == None:
       raise Exception("input_dims must be specified")
@@ -205,7 +204,6 @@ class Agent:
     self.policy_clip: float = policy_clip
     self.n_epochs: int = n_epochs
     self.gae_lambda: float = gae_lambda
-    self.agent_id: str = agent_id
 
     self.actor: ActorNetwork = ActorNetwork(n_actions, input_dims, alpha)
     self.critic: CriticNetwork = CriticNetwork(input_dims, alpha)
