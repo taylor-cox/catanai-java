@@ -1,51 +1,115 @@
 package com.catanai.server.model.player;
 
+import com.catanai.server.model.action.ActionMetadata;
 import com.catanai.server.model.bank.card.DevelopmentCard;
 import com.catanai.server.model.bank.card.ResourceCard;
+import com.catanai.server.model.board.building.Road;
+import com.catanai.server.model.board.building.Settlement;
+import com.catanai.server.model.board.graph.Edge;
+import com.catanai.server.model.board.graph.Node;
 import com.catanai.server.model.gamestate.GameState;
-import com.catanai.server.model.player.action.ActionMetadata;
+import lombok.Getter;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /**
 * Represents a Catan player.
 */
 public abstract class Player {
-  protected PlayerId id;
-  protected List<ResourceCard> resourceCards;
+  protected PlayerID id;
+  @Getter
+  protected int victoryPoints;
+
+  @Getter
+  protected Map<ResourceCard, Integer> resourceCards;
+  @Getter
+  protected Map<ResourceCard, Integer> knownCards;
+
+  @Getter
   protected List<DevelopmentCard> developmentCards;
+  @Getter
+  protected ArrayList<DevelopmentCard> developmentCardsDrawnThisTurn;
+  protected boolean playedDevelopmentCardThisTurn;
+
+  @Getter
   protected int remainingSettlements;
+  @Getter
   protected int remainingCities;
+  @Getter
   protected int remainingRoads;
+
+  @Getter
+  protected List<Edge> possibleRoadEdges;
+  @Getter
+  protected List<Node> possibleSettlementNodes;
+  @Getter
+  protected List<Node> possibleCityNodes;
+
+  @Getter
+  protected List<Road> roads;
+
+  @Getter
+  protected int numKnightsPlayed;
   protected boolean largestArmy;
   protected boolean longestRoad;
-  protected int victoryPoints;
-  protected List<ResourceCard> knownCards;
+  @Getter
+  protected int longestRoadSize;
+
+  protected boolean rolledDiceThisTurn;
   protected boolean hasFinishedTurn;
-  protected int numKnightsPlayed;
-  protected ArrayList<DevelopmentCard> developmentCardsDrawnThisTurn;
-  protected ActionMetadata previousAction;
   protected boolean hasDiscardedThisTurn;
-  
+  @Getter
+  protected ActionMetadata previousAction;
+
+  @Getter
+  protected Settlement firstStartingSettlement;
+  @Getter
+  protected Settlement secondStartingSettlement;
+
   /**
    * Initializes all player variables.
    */
-  public Player(PlayerId id) {
+  public Player(PlayerID id) {
     this.id = id;
-    this.resourceCards = new ArrayList<ResourceCard>();
-    this.developmentCards = new ArrayList<DevelopmentCard>();
-    this.developmentCardsDrawnThisTurn = new ArrayList<DevelopmentCard>();
+    this.victoryPoints = 0;
+
+    this.resourceCards = new HashMap<>();
+    this.knownCards = new HashMap<>();
+    for (int i = 0; i < 5; i++) {
+      this.resourceCards.put(ResourceCard.valueOf(i), 0);
+      this.knownCards.put(ResourceCard.valueOf(i), 0);
+    }
+
+    this.developmentCards = new ArrayList<>();
+    this.developmentCardsDrawnThisTurn = new ArrayList<>();
+    this.playedDevelopmentCardThisTurn = false;
+
     this.remainingSettlements = 5;
     this.remainingCities = 4;
     this.remainingRoads = 15;
+
+    this.possibleRoadEdges = new ArrayList<>();
+    this.possibleSettlementNodes = new ArrayList<>();
+    this.possibleCityNodes = new ArrayList<>();
+
+    this.roads = new ArrayList<>();
+
+    this.numKnightsPlayed = 0;
     this.largestArmy = false;
     this.longestRoad = false;
-    this.victoryPoints = 0;
-    this.knownCards = new ArrayList<ResourceCard>();
+    this.longestRoadSize = 0;
+
+    this.rolledDiceThisTurn = false;
     this.hasFinishedTurn = false;
-    this.numKnightsPlayed = 0;
     this.hasDiscardedThisTurn = false;
+    this.previousAction = null;
+
+    this.firstStartingSettlement = null;
+    this.secondStartingSettlement = null;
   }
 
   /**
@@ -55,122 +119,233 @@ public abstract class Player {
   */
   public abstract int[] play(GameState gameState);
   
-  /**
-  * Takes all the cards of type rc from the player's hand.
-  *
-  * @param rc resource to take from player's hand
-  * @return all cards of type taken from the player's hand
-  */
-  public ArrayList<ResourceCard> takeAllCardsFromHand(ResourceCard rc) {
-    ArrayList<ResourceCard> toTake = new ArrayList<ResourceCard>();
-    int amountOfCard = (int) this.resourceCards
-        .stream()
-        .filter((resource) -> { 
-          return resource.getValue() == rc.getValue(); 
-        })
-        .count();
-    for (int i = 0; i < amountOfCard; i++) {
-      toTake.add(rc);
-      this.resourceCards.remove(rc);
-    }
-    return toTake;
-  }
-  
-  /**
-  * Takes all resources from the player's hand and returns them.
-  *
-  * @param resources resources to take from hand
-  * @return the resources taken from the hand
-  */
-  public List<ResourceCard> takeAllCardsFromHand(List<ResourceCard> resources) {
-    ArrayList<ResourceCard> toReturn = new ArrayList<ResourceCard>();
-    for (ResourceCard rc : resources) {
-      toReturn.add(this.resourceCards.remove(this.resourceCards.indexOf(rc)));
-    }
-    
-    return toReturn;
-  }
-  
-  /**
-  * Removes a random card from this player's hand.
-  *
-  * @return a random card removed from this player's hand if available;
-  *     otherwise null.
-  */
-  public ResourceCard takeRandomCardFromHand() {
-    if (this.resourceCards.size() == 0) {
-      return null;
-    }
-    Random rand = new Random();
-    int cardToRemove = rand.nextInt(this.resourceCards.size());
-    return this.resourceCards.remove(cardToRemove);
-  }
-  
   //****************************************************************************
   //*************************** Getters and setters ****************************
   //****************************************************************************
   
-  public PlayerId getId() {
+  //****************************************************************************
+  //*********************************** ID *************************************
+  //****************************************************************************
+
+  public PlayerID getID() {
     return this.id;
   }
   
+  public void setId(PlayerID id) {
+    this.id = id;
+  }
+  
+  //****************************************************************************
+  //********************************** Cards ***********************************
+  //****************************************************************************
+
+  /*---------------------------------Resources--------------------------------*/
   public void addToResourceCards(ResourceCard card) {
-    this.resourceCards.add(card);
+    this.resourceCards.put(card, this.resourceCards.get(card) + 1);
   }
   
   public void addToKnownCards(ResourceCard card) {
-    this.resourceCards.add(card);
-    this.knownCards.add(card);
+    this.addToResourceCards(card);
+    this.knownCards.put(card, this.knownCards.get(card) + 1);
+  }
+  
+  public void addAmountToResourceCards(ResourceCard card, int amount) {
+    this.resourceCards.put(card, this.resourceCards.get(card) + amount);
+  }
+  
+  public void addAmountToKnownCards(ResourceCard card, int amount) {
+    this.addAmountToResourceCards(card, amount);
+    this.knownCards.put(card, this.knownCards.get(card) + amount);
+  }
+
+  /**
+  * Removes a random card from this player's hand.
+  *
+  * @return a random card removed from this player's hand if available; otherwise null.
+  */
+  public ResourceCard takeRandomCardFromHand() {
+    // Get all resource cards which are greater than zero in hand.
+    List<ResourceCard> cards = new ArrayList<>();
+    for (ResourceCard card : this.resourceCards.keySet()) {
+      if (this.resourceCards.get(card) > 0) {
+        cards.add(card);
+      }
+    }
+
+    // Pick one of these resources at random
+    if (cards.isEmpty()) {
+      return null;
+    }
+    Random rand = new Random();
+    int index = rand.nextInt(cards.size());
+    ResourceCard card = cards.get(index);
+
+    // Remove this card from hand.
+    this.resourceCards.put(card, this.resourceCards.get(card) - 1);
+    return card;
+  }
+  
+  public boolean hasAmountOfResourceInHand(ResourceCard card, int amount) {
+    return this.resourceCards.get(card) >= amount;
+  }
+  
+  public int removeAllOfOneCardFromHand(ResourceCard card) {
+    if (this.resourceCards.containsKey(card)) {
+      int numCards = this.resourceCards.get(card);
+      this.resourceCards.put(card, 0);
+      return numCards;
+    }
+    return 0;
   }
   
   /**
-   * Adds all the cards from @param cards to known cards.
+   * Removes a certain amount of a resource card from this player's hand.
    *
-   * @param cards cards to add to known cards.
+   * @param card   the resource to remove
+   * @param amount amount of resource to remove
    */
-  public void addAllToKnownCards(ArrayList<ResourceCard> cards) {
-    for (ResourceCard c : cards) {
-      this.knownCards.add(c);
-      this.resourceCards.add(c);
+  public void removeAmountOfResourceCardFromHand(ResourceCard card, int amount) {
+    int resourceSizeAfterRemoval = this.resourceCards.get(card) - amount;
+    if (this.resourceCards.get(card) - amount >= 0) {
+      this.resourceCards.put(card, resourceSizeAfterRemoval);
     }
   }
   
-  public List<ResourceCard> getResourceCards() {
-    return this.resourceCards;
+  /**
+   * Returns the total amount of resource cards in this player's hand.
+   *
+   * @return total amount of resource cards in this player's hand.
+   */
+  public int getAmountOfResourceCardsInHand() {
+    int amount = 0;
+    for (ResourceCard card : this.resourceCards.keySet()) {
+      amount += this.resourceCards.get(card);
+    }
+    return amount;
+  }
+  /*--------------------------------------------------------------------------*/
+
+  /*---------------------------------Dev Cards--------------------------------*/
+  public void addDevelopmentCard(DevelopmentCard card) {
+    this.developmentCardsDrawnThisTurn.add(card);
+  }
+
+  public void removeDevelopmentCard(DevelopmentCard card) {
+    this.developmentCards.remove(card);
+  }
+
+  public boolean hasPlayedDevelopmentCardThisTurn() {
+    return this.playedDevelopmentCardThisTurn;
+  }
+
+  public void setPlayedDevelopmentCardThisTurn(boolean playedDevelopmentCardThisTurn) {
+    this.playedDevelopmentCardThisTurn = playedDevelopmentCardThisTurn;
+  }
+
+  public void addAllDevelopmentCardsDrawnThisTurnToDevelopmentCards() {
+    this.developmentCards.addAll(this.developmentCardsDrawnThisTurn);
+    this.developmentCardsDrawnThisTurn.clear();
   }
   
-  public int getRemainingSettlements() {
-    return this.remainingSettlements;
+  public boolean hasDevelopmentCard(DevelopmentCard card) {
+    return this.developmentCards.contains(card);
   }
+  /*--------------------------------------------------------------------------*/
   
+  //****************************************************************************
+  //******************************** Buildings *********************************
+  //****************************************************************************
+
+  /*------------------------------- Settlements ------------------------------*/
+
   public void setRemainingSettlements(int remainingSettlements) {
     this.remainingSettlements = remainingSettlements;
   }
   
-  public int getRemainingCities() {
-    return this.remainingCities;
+  public void addNodeToPossibleSettlementNodes(Node n) {
+    this.possibleSettlementNodes.add(n);
   }
+
+  public void removeNodeFromPossibleSettlementNodes(Node n) {
+    this.possibleSettlementNodes.remove(n);
+  }
+
+  public void setFirstStartingSettlement(Settlement s) {
+    this.firstStartingSettlement = s;
+  }
+
+  public void setSecondStartingSettlement(Settlement s) {
+    this.secondStartingSettlement = s;
+  }
+
+  public void clearPossibleSettlementNodes() {
+    this.possibleSettlementNodes.clear();
+  }
+  /*--------------------------------------------------------------------------*/
   
+  /*--------------------------------- Cities ---------------------------------*/
+
   public void setRemainingCities(int remainingCities) {
     this.remainingCities = remainingCities;
   }
   
-  public int getRemainingRoads() {
-    return this.remainingRoads;
+  public void addNodeToPossibleCityNodes(Node n) {
+    this.possibleCityNodes.add(n);
   }
+
+  /*--------------------------------------------------------------------------*/
   
+  /*---------------------------------- Roads ---------------------------------*/
+
   public void setRemainingRoads(int remainingRoads) {
     this.remainingRoads = remainingRoads;
   }
   
+  public void addEdgeToPossibleRoadEdges(Edge e) {
+    this.possibleRoadEdges.add(e);
+  }
+
+  public void removeEdgeFromPossibleRoadEdges(Edge e) {
+    this.possibleRoadEdges.remove(e);
+  }
+
+  public boolean possibleRoadEdgesDoesNotContain(Edge e) {
+    return !this.possibleRoadEdges.contains(e);
+  }
+  
+  public void clearPossibleRoadEdges() {
+    this.possibleRoadEdges.clear();
+  }
+  
+  public void addAllEdgesToPossibleRoadEdges(List<Edge> edges) {
+    this.possibleRoadEdges.addAll(edges);
+  }
+
+  public void addRoad(Road r) {
+    this.roads.add(r);
+  }
+
+  /*--------------------------------------------------------------------------*/
+  
+  //****************************************************************************
+  //***************************** Victory Points *******************************
+  //****************************************************************************
+
+  /*----------------------------- Victory Points -----------------------------*/
+
+  public void setVictoryPoints(int victoryPoints) {
+    this.victoryPoints = victoryPoints;
+  }
+  /*--------------------------------------------------------------------------*/
+
+  /*------------------------------ Largest Army ------------------------------*/
   public boolean hasLargestArmy() {
     return this.largestArmy;
   }
+
+  /*--------------------------------------------------------------------------*/
   
-  public void setLargestArmy(boolean largestArmy) {
-    this.largestArmy = largestArmy;
-  }
-  
+  /*------------------------------ Longest Road ------------------------------*/
   public boolean hasLongestRoad() {
     return this.longestRoad;
   }
@@ -178,95 +353,33 @@ public abstract class Player {
   public void setLongestRoad(boolean longestRoad) {
     this.longestRoad = longestRoad;
   }
-  
-  public int getVictoryPoints() {
-    return this.victoryPoints;
-  }
-  
-  public void setVictoryPoints(int victoryPoints) {
-    this.victoryPoints = victoryPoints;
-  }
-  
-  public List<ResourceCard> getKnownCards() {
-    return this.knownCards;
-  }
 
-  public ActionMetadata getPreviousAction() {
-    return this.previousAction;
-  }
+  /*--------------------------------------------------------------------------*/
+  
+  //****************************************************************************
+  //********************************* Metadata *********************************
+  //****************************************************************************
 
   public boolean hasDiscardedThisTurn() {
     return this.hasDiscardedThisTurn;
-  }
-  
-  /**
-   * Removes the resource card @param c from hand.
-   *
-   * @param c resource card to remove from hand
-   * @return resource card removed from hand
-   */
-  public ResourceCard removeResourceCardFromHand(ResourceCard c) {
-    if (this.resourceCards.remove(c)) {
-      return c;
-    } else {
-      return null;
-    }
-  }
-  
-  public void addDevelopmentCard(DevelopmentCard card) {
-    this.developmentCardsDrawnThisTurn.add(card);
-  }
-  
-  public List<DevelopmentCard> getDevelopmentCards() {
-    return this.developmentCards;
-  }
-  
-  public boolean hasFinishedTurn() {
-    return this.hasFinishedTurn;
-  }
-  
-  /**
-   * Sets that the player has finished their turn, and adds all development
-   * cards drawn this turn to the list of possibly playable ones.
-   *
-   * @param hasFinishedTurn what to set hasFinishedTurn to
-   */
-  public void setHasFinishedTurn(boolean hasFinishedTurn) {
-    this.hasFinishedTurn = hasFinishedTurn;
-    if (hasFinishedTurn) {
-      this.developmentCards.addAll(this.developmentCardsDrawnThisTurn);
-      this.developmentCardsDrawnThisTurn.clear();
-    }
   }
 
   public void setHasDiscardedThisTurn(boolean hasDiscardedThisTurn) {
     this.hasDiscardedThisTurn = hasDiscardedThisTurn;
   }
-  
-  public int getNumKnightsPlayed() {
-    return this.numKnightsPlayed;
+
+  public void setRolledDiceThisTurn(boolean rolledDiceThisTurn) {
+    this.rolledDiceThisTurn = rolledDiceThisTurn;
   }
-  
-  public void setNumKnightsPlayed(int numKnightsPlayed) {
-    this.numKnightsPlayed = numKnightsPlayed;
+
+  public boolean hasRolledDiceThisTurn() {
+    return this.rolledDiceThisTurn;
   }
-  
-  /**
-   * Remove the development card @param card from hand.
-   *
-   * @param card development card to remove from hand.
-   * @return development card which was removed from hand.
-   */
-  public DevelopmentCard removeDevelopmentCard(DevelopmentCard card) {
-    if (!this.developmentCards.remove(card)) {
-      return null;
-    }
-    return card;
-  }
-  
+
   //****************************************************************************
   //********************************* Overrides ********************************
   //****************************************************************************
+
   @Override
   public boolean equals(Object o) {
     if (o == null) {
