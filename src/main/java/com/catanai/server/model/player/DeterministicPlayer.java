@@ -1,7 +1,9 @@
 package com.catanai.server.model.player;
 
+import com.catanai.server.model.action.ActionMetadata;
 import com.catanai.server.model.gamestate.GameState;
-import com.catanai.server.model.player.action.ActionMetadata;
+
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -11,7 +13,7 @@ import java.util.Queue;
 public final class DeterministicPlayer extends Player {
   private Queue<int[]> moveMetadatas;
 
-  public DeterministicPlayer(PlayerId id) {
+  public DeterministicPlayer(PlayerID id) {
     super(id);
     this.moveMetadatas = new LinkedList<int[]>();
   }
@@ -30,9 +32,7 @@ public final class DeterministicPlayer extends Player {
   }
 
   public void addAllMoves(int[][] moves) {
-    for (int i = 0; i < moves.length; i++) {
-      this.moveMetadatas.add(moves[i]);
-    }
+    this.moveMetadatas.addAll(Arrays.asList(moves));
   }
 
   /**
