@@ -18,10 +18,9 @@ import com.catanai.server.model.action.executors.SettlementExecutor;
 import com.catanai.server.model.action.executors.SpecificActionExecutor;
 import com.catanai.server.model.action.executors.YearOfPlentyExecutor;
 import com.catanai.server.model.player.Player;
-import lombok.Getter;
-
 import java.util.HashMap;
 import java.util.Map;
+import lombok.Getter;
 
 /**
 * Class which executes the actions of a player on a game of Catan.
