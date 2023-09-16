@@ -3,11 +3,9 @@ package com.catanai.server.model;
 import com.catanai.server.model.board.Board;
 import com.catanai.server.model.player.DeterministicPlayer;
 import com.catanai.server.model.player.Player;
-import com.catanai.server.model.player.PlayerId;
-/** Utils. */
+import com.catanai.server.model.player.PlayerID;
 import java.util.ArrayList;
 import java.util.List;
-/** Test. */
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,10 +22,10 @@ public class TestGame {
   @Before
   public void setUp() {
     List<Player> players = new ArrayList<>();
-    players.add(new DeterministicPlayer(PlayerId.ONE));
-    players.add(new DeterministicPlayer(PlayerId.TWO));
-    players.add(new DeterministicPlayer(PlayerId.THREE));
-    players.add(new DeterministicPlayer(PlayerId.FOUR));
+    players.add(new DeterministicPlayer(PlayerID.ONE));
+    players.add(new DeterministicPlayer(PlayerID.TWO));
+    players.add(new DeterministicPlayer(PlayerID.THREE));
+    players.add(new DeterministicPlayer(PlayerID.FOUR));
     game = new Game(players);
   }
 
