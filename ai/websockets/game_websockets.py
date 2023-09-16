@@ -6,8 +6,13 @@ class GameWebSocketHandler:
   """Handler with context manager for handling websocket connection to game,
   getting Gamestates, doing player actions, etc. from backend (Java)."""
 
-  def __init__(self, connectionString: str):
-    self.connectionString = connectionString
+  connectionString: str
+
+  def __init__(self, connectionString: str | None = None):
+    if connectionString is None:
+      self.connectionString = 'ws://127.0.0.1:8080/game'
+    else: 
+      self.connectionString = connectionString
 
   def newGame(self) -> str:
     actionString = json.dumps({'command': 'newGame'})
@@ -40,4 +45,11 @@ class GameWebSocketHandler:
     return self
   
   def __exit__(self, type, value, traceback):
+    self.ws.close()
+  
+  def open(self):
+    self.ws = websocket.create_connection(self.connectionString)
+    return self
+  
+  def close(self):
     self.ws.close()
