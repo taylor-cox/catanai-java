@@ -1,5 +1,8 @@
 package com.catanai.server.model;
 
+import com.catanai.server.model.action.ActionExecutor;
+import com.catanai.server.model.action.ActionMetadata;
+import com.catanai.server.model.action.TradeOffer;
 import com.catanai.server.model.bank.Dealer;
 import com.catanai.server.model.board.Board;
 import com.catanai.server.model.board.building.Settlement;
@@ -8,9 +11,7 @@ import com.catanai.server.model.board.tile.Terrain;
 import com.catanai.server.model.board.tile.Tile;
 import com.catanai.server.model.gamestate.GameState;
 import com.catanai.server.model.player.Player;
-import com.catanai.server.model.player.action.Action;
-import com.catanai.server.model.player.action.ActionExecutor;
-import com.catanai.server.model.player.action.ActionMetadata;
+import com.catanai.server.model.player.PlayerID;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,26 +20,26 @@ import java.util.Random;
 import java.util.Set;
 
 /**
- * Represents game of Catan.
+ * Handles high-level game logic.
  */
 public final class Game {
   private List<? extends Player> players;
   private Player currentPlayer;
-  private Board board;
-  private Dealer dealer;
-  private GameState currentGameState;
-  private List<GameState> gameStates;
-  private boolean ended;
-  private int lastDiceRollValue;
-  private ActionExecutor actionExecutor;
-  private State currentState;
-  private Settlement previousSettlement;
-  private Action lastAction;
-  private boolean lastActionSuccessful;
 
-  private enum State {
-    START_BUILD, START_ROAD, START2_BUILD, START2_ROAD, BUSINESS_AS_USUAL, TRADE
-  }
+  private Board board;
+
+  private Dealer dealer;
+
+  private List<GameState> gameStates;
+  private GameState currentGameState;
+
+  private boolean ended;
+
+  private int lastDiceRollValue;
+
+  private ActionExecutor actionExecutor;
+
+  private List<TradeOffer> tradeOffers;
 
   /**
    * Creates a new Catan game with players @param players.
@@ -56,7 +57,7 @@ public final class Game {
     this.currentGameState = new GameState(this);
     this.gameStates.add(this.currentGameState);
     this.actionExecutor = new ActionExecutor(this);
-    this.currentState = State.START_BUILD;
+    this.tradeOffers = new ArrayList<TradeOffer>();
   }
 
   /**
@@ -67,161 +68,20 @@ public final class Game {
     this.gameStates.add(this.currentGameState);
   }
 
-  /**
-   * Updates the gamestate, and adds it to the list of gamestates.
-   *
-   * @param gs gamestate to update to.
-   */
-  private void updateGamestate(GameState gs) {
-    this.lastAction = Action.valueOf(this.actionExecutor.getLastActionID());
-    this.currentGameState = gs;
-    this.gameStates.add(gs);
-  }
-
   // ****************************************************************************
   // *************************** Gameplay Functions *****************************
   // ****************************************************************************
-
-  private boolean currentPlayerMakeMove() {
-    boolean toReturn = false;
-    if (this.currentState == State.START_BUILD && this.lastAction != null && this.lastActionSuccessful) {
-      this.currentPlayer = this.players.get(this.currentPlayer.getId().getValue());
-    } else if (this.currentState == State.START2_BUILD && this.gameStates.size() > 9 && this.lastAction != null && this.lastActionSuccessful) {
-      this.currentPlayer = this.players.get(this.currentPlayer.getId().getValue() - 2);
-    } else if(this.currentState == State.BUSINESS_AS_USUAL 
-        && this.gameStates.size() > 17
-        && this.lastAction != null
-        && this.lastAction == Action.END_TURN) {
-      this.currentPlayer = this.players.get((this.currentPlayer.getId().getValue() % 4));
-    }
-    switch (this.currentState) {
-      case START_BUILD:
-        toReturn = handleStartBuild();
-        break;
-      case START_ROAD:
-        toReturn =  handleStartRoad();
-        break;
-      case START2_BUILD:
-        toReturn =  handleStartBuild2();
-        break;
-      case START2_ROAD:
-        toReturn =  handleStartRoad2();
-        break;
-      case BUSINESS_AS_USUAL:
-        toReturn =  handleMove();
-        break;
-      default:
-        toReturn =  false;
-        break;
-    }
-    lastActionSuccessful = toReturn;
-    return toReturn;
-  }
-
-  private boolean handleMove() {
-    if (this.gameStates.size() >= 16 && this.lastAction == Action.END_TURN) {
-      int diceRoll = this.rollDice();
-      if (diceRoll == 7) {
-        // TODO: Remove this when we have a way to move the robber.
-        diceRoll = 8;
-      }
-      if (diceRoll != 7) {
-        this.produce(diceRoll);
-      } else {
-        this.actionExecutor.makePlayersDiscard();
-        this.actionExecutor.makePlayerMoveRobber(this.currentPlayer, this.currentGameState);
-      }
-    }
-
-    ActionMetadata amd = new ActionMetadata(this.currentPlayer.play(this.currentGameState));
-    this.lastAction = amd.getAction();
-    if (!this.actionExecutor.doAction(amd, this.currentPlayer)) {
-      return false;
-    }
-    if(this.currentPlayer.getVictoryPoints() >= 10) {
-      this.ended = true;
-    }
-    this.updateGamestate();
-    return true;
-  }
-
-  /**
-   * Handles starting settlement of player.
-   *
-   * @param currentPlayer current game player.
-   */
-  private boolean handleStartBuild() {
-    GameState actionGameState = this.actionExecutor.startingSettlement(this.currentPlayer, currentGameState);
-    if (actionGameState == null) {
-      return false;
-    }
-    this.updateGamestate(actionGameState);
-    this.currentState = State.START_ROAD;
-    return true;
-  }
-
-  /**
-   * Handles starting road of current player.
-   *
-   * @param currentPlayer current game player.
-   */
-  private boolean handleStartRoad() {
-    GameState actionGameState = this.actionExecutor.startingRoad(this.currentPlayer, currentGameState);
-    if (actionGameState == null) {
-      return false;
-    }
-    this.updateGamestate(actionGameState);
-    if (this.gameStates.size() >= 8) {
-      this.currentState = State.START2_BUILD;
-    } else {
-      this.currentState = State.START_BUILD;
-    }
-    return true;
-  }
-
-  /**
-   * Handles second starting settlement of player.
-   *
-   * @param currentPlayer current game player.
-   */
-  private boolean handleStartBuild2() {
-    ActionExecutor.SettlementGameStatePair sgsp = 
-        this.actionExecutor.secondSettlement(this.currentPlayer, currentGameState);
-    if (sgsp == null) {
-      return false;
-    }
-    this.previousSettlement = sgsp.getSettlement();
-    this.updateGamestate(sgsp.getGameState());
-    this.currentState = State.START2_ROAD;
-    return true;
-  }
-  
-  /**
-   * Handles second starting road of a player.
-   *
-   * @param currentPlayer current player in game
-   */
-  private boolean handleStartRoad2() {
-    GameState actionGameState = 
-        this.actionExecutor.secondRoad(this.currentPlayer, this.previousSettlement, currentGameState);
-    if (actionGameState == null) {
-      return false;
-    }
-    this.updateGamestate(actionGameState);
-    if (this.gameStates.size() >= 16) {
-      this.currentState = State.BUSINESS_AS_USUAL;
-      this.lastAction = Action.END_TURN;
-    } else {
-      this.currentState = State.START2_BUILD;
-    }
-    return true;
-  }
 
   /**
    * Represents the next turn of the Catan game.
    */
   public boolean nextMove() {
-    return this.currentPlayerMakeMove();
+    ActionMetadata playerAction = new ActionMetadata(currentPlayer.play(this.currentGameState));
+    if (this.actionExecutor.doAction(playerAction, currentPlayer)) {
+      this.updateGamestate();
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -233,7 +93,7 @@ public final class Game {
    *
    * @param diceRoll the number of the dice roll
    */
-  private void produce(int diceRoll) {
+  public void produce(int diceRoll) {
     HashMap<Player, HashMap<Terrain, Integer>> resources = this.getResourcesToProduce(diceRoll);
     HashMap<Terrain, Integer> amountToProduce = this.getAmountOfResourcesToProduce(resources);
     Set<Terrain> doNotProduce = this.getResourcesUnableToProduce(resources, amountToProduce);
@@ -333,7 +193,7 @@ public final class Game {
         return;
       }
       resources.forEach((player, terrainMap) -> {
-        if (terrainMap.get(terrain) == amount) {
+        if (terrainMap.get(terrain).equals(amount)) {
           return;
         }
       });
@@ -347,7 +207,7 @@ public final class Game {
    *
    * @return a value between 2-12 representing two d6 rolls.
    */
-  private int rollDice() {
+  public int rollDice() {
     Random rand = new Random();
     int low = 1;
     int high = 6;
@@ -394,29 +254,43 @@ public final class Game {
     return this.lastDiceRollValue;
   }
 
-  /**
-   * Whether or not the current game is in it's starting turns or not.
-   *
-   * @return whether the game is in its starting turns or not.
-   */
-  public boolean startingTurnSettlement() {
-    return this.currentState == State.START_BUILD 
-        || this.currentState == State.START2_BUILD;
-  }
-
-  public boolean startingTurnRoad() {
-    return this.currentState == State.START_ROAD 
-        || this.currentState == State.START2_ROAD;
-  }
-
   public void setPlayers(ArrayList<Player> players) {
     this.players = players;
   }
 
+  public Player getPlayerByID(PlayerID playerID) {
+    return this.players.get(playerID.getValue() - 1);
+  }
+
   public int getLastAction() {
-    if (this.actionExecutor == null) {
-      return 0;
-    }
-    return this.actionExecutor.getLastActionID();
+    return this.actionExecutor == null ? 0 : this.actionExecutor.getLastActionMetadata().getAction().getValue();
+  }
+
+  public void addTradeOffer(TradeOffer tradeOffer) {
+    this.tradeOffers.add(tradeOffer);
+  }
+
+  public void removeAllTradeOffers() {
+    this.tradeOffers.clear();
+  }
+
+  public List<TradeOffer> getTradeOffers() {
+    return this.tradeOffers;
+  }
+
+  public void removeTradeOffer(TradeOffer tradeOffer) {
+    this.tradeOffers.remove(tradeOffer);
+  }
+
+  public void setCurrentPlayer(Player p) {
+    this.currentPlayer = p;
+  }
+
+  public ActionExecutor getActionExecutor() {
+    return this.actionExecutor;
+  }
+
+  public void setActionExecutor(ActionExecutor ae) {
+    this.actionExecutor = ae;
   }
 }
