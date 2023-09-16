@@ -44,3 +44,5 @@ tmp/
 ### Examples ###
 ai/main_test.py
 ai/ppo_torch.py
+/java-workspace.code-workspace
+/qodana.yaml
