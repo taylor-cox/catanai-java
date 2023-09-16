@@ -113,7 +113,6 @@ public final class Board {
             && node.getBuilding().getPlayerId() == road.getPlayerId()
         );
     if (hasBuildingOneNodeAway) {
-      curEdge.setRoad(road);
       return true;
     }
 
