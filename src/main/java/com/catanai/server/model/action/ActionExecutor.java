@@ -29,6 +29,7 @@ public final class ActionExecutor {
   private final Game game;
   @Getter
   private ActionMetadata lastActionMetadata;
+  @Getter
   private final ActionStateMachine actionStateMachine;
 
   private Map<Action, SpecificActionExecutor> actionToExecutorMap;

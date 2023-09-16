@@ -370,6 +370,10 @@ public final class GameState {
     map.put("currentPlayer", new int[][] {{this.game.getCurrentPlayer().getID().getValue()}});
     map.put("actionID", new int[][] {{this.lastAction}});
     map.put("finished", new int[][] {{this.game.hasEnded() ? 1 : 0}});
+    map.put(
+        "actionState",
+        new int[][] {{this.game.getActionExecutor().getActionStateMachine().getCurrentActionState().getValue()}}
+    );
     
     return map;
   }

@@ -85,7 +85,7 @@ class GameTrainer:
             observation = observation_
 
             # Print if the move was successful.
-            if game_state['reward'][0][0] == 1:
+            if game_state['successful'][0][0] == 1:
                 print(f'Player {self.agent_trainer.player_id} successfully played move!')
                 print(action)
                 self.game_state_dao.addGamestate(self.game_response_parser.getGameStateMessage(),
