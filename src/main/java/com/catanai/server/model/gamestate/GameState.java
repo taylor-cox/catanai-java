@@ -70,15 +70,6 @@ public final class GameState {
   /** Contains information on the last action played by the player. */
   private int lastAction;
   
-  /** Order of all the cards. This will stay consistent whenever reffering to cards. */
-  private final ResourceCard[] orderOfCards = {
-    ResourceCard.WOOL,
-    ResourceCard.GRAIN,
-    ResourceCard.LUMBER,
-    ResourceCard.ORE,
-    ResourceCard.BRICK,
-  };
-  
   /**
    * Creates a new gamestate according to @param game.
    *
@@ -173,22 +164,14 @@ public final class GameState {
   private void populatePlayerPerspectiveResourceCards() {
     for (int i = 0; i < this.game.getPlayers().size(); i++) {
       Player curPlayer = this.game.getPlayers().get(i);
-      List<ResourceCard> curCards = 
+      Map<ResourceCard, Integer> numCards = 
           curPlayer.equals(this.game.getCurrentPlayer()) 
           ? curPlayer.getResourceCards()
           : curPlayer.getKnownCards();
-      // Initialize HashMap.
-      HashMap<ResourceCard, Integer> numCards = new HashMap<>();
-      for (ResourceCard card : orderOfCards) {
-        numCards.put(card, 0);
-      }
-      // Add to hashmap the number of cards of type found.
-      for (ResourceCard card : curCards) {
-        numCards.merge(card, 1, (a, b) -> a + b);
-      }
       // Add cards to append to playerResourceCards.
       ArrayList<Integer> toAddToPlayerResourceCards = new ArrayList<Integer>();
-      for (ResourceCard card : orderOfCards) {
+      for (int j = 0; j < 5; j++) {
+        ResourceCard card = ResourceCard.valueOf(j);
         toAddToPlayerResourceCards.add(numCards.get(card));
       }
       playerPerspectiveResourceCards[i] = new int[5];
@@ -213,19 +196,11 @@ public final class GameState {
   private void populatePlayerFullResourceCards() {
     for (int i = 0; i < this.game.getPlayers().size(); i++) {
       Player curPlayer = this.game.getPlayers().get(i);
-      List<ResourceCard> curCards = curPlayer.getResourceCards();
-      // Initialize HashMap.
-      HashMap<ResourceCard, Integer> numCards = new HashMap<>();
-      for (ResourceCard card : orderOfCards) {
-        numCards.put(card, 0);
-      }
-      // Add to hashmap the number of cards of type found.
-      for (ResourceCard card : curCards) {
-        numCards.merge(card, 1, (a, b) -> a + b);
-      }
+      Map<ResourceCard, Integer> numCards = curPlayer.getResourceCards();
       // Add cards to append to playerResourceCards.
       ArrayList<Integer> toAddToPlayerResourceCards = new ArrayList<Integer>();
-      for (ResourceCard card : orderOfCards) {
+      for (int j = 0; j < 5; j++) {
+        ResourceCard card = ResourceCard.valueOf(j);
         toAddToPlayerResourceCards.add(numCards.get(card));
       }
       playerFullResourceCards[i] = new int[5];
@@ -375,24 +350,12 @@ public final class GameState {
   public int getLastDiceRollValue() {
     return this.lastDiceRollValue;
   }
-  
-  public ResourceCard[] getOrderOfCards() {
-    return this.orderOfCards;
-  }
 
-  public int[][][] toArray() {
-    return new int[][][] {
-      tiles,
-      new int[][] {banks},
-      playerPerspectiveResourceCards,
-      playerFullResourceCards,
-      new int[][] {edges},
-      nodes,
-      new int[][] {ports},
-      playerMetadata
-    };
-  }
-
+  /**
+   * Converts gamestate to a json complient map.
+   *
+   * @return map of gamestate.
+   */
   public Map<String, int[][]> toMap() {
     Map<String, int[][]> map = new HashMap<>();
     map.put("tiles", this.tiles);
@@ -404,19 +367,10 @@ public final class GameState {
     map.put("ports", new int[][] {this.ports});
     map.put("playerMetadata", this.playerMetadata);
     map.put("lastRoll", new int[][] {{this.lastDiceRollValue}});
-    map.put("currentPlayer", new int[][] {{this.game.getCurrentPlayer().getId().getValue()}});
-    int[][] orderOfCards = new int[][] {{
-        this.orderOfCards[0].getValue(),
-        this.orderOfCards[1].getValue(),
-        this.orderOfCards[2].getValue(),
-        this.orderOfCards[3].getValue(),
-        this.orderOfCards[4].getValue(),
-      }
-    };
-    map.put("orderOfCards", orderOfCards);
+    map.put("currentPlayer", new int[][] {{this.game.getCurrentPlayer().getID().getValue()}});
     map.put("actionID", new int[][] {{this.lastAction}});
     map.put("finished", new int[][] {{this.game.hasEnded() ? 1 : 0}});
-
+    
     return map;
   }
 }
