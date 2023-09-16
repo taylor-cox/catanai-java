@@ -58,6 +58,8 @@ import wandb
 #     print(f'--------------------------\nEpisode: {i}\nScore: {score}\nAverage Score: {avg_score}\nTime steps: {n_steps}\nLearning steps: {learn_iters}')
 
 if __name__ == '__main__':
+  trainer = GameTrainer(True)
+  # trainer.run_training()
   # gameStateDao = GameStateDAO()
   # with GameWebSocketHandler('ws://192.168.1.108:8080/game') as websocketHandler:
   #   gamestateString = websocketHandler.newGame()
@@ -79,13 +81,4 @@ if __name__ == '__main__':
   #   for _ in range(16):
   #     gamestateString = websocketHandler.makeMove()
       # gameStateDao.addGamestate(gamestateString, 0)
-
-  trainer = GameTrainer(True)
-
-  # game_response_parser = GameResponseParser()
-  # with GameWebSocketHandler('ws://192.168.1.108:8080/game') as websocketHandler:
-  #   gamestateString = websocketHandler.newGame()
-  #   game_response_parser.setMessage(gamestateString)
-  #   gameStateArray = game_response_parser.getGameStateAsObservation()
-    
   pass
