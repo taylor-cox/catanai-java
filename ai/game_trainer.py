@@ -1,4 +1,5 @@
 import numpy as np
+from ai.websockets.game_state import GameState
 from ml.ppo import Agent
 from dao.dao import GameStateDAO
 from websockets.game_response_parser import GameResponseParser
@@ -6,7 +7,6 @@ from websockets.game_websockets import GameWebSocketHandler
 import torch as T
 
 from typing import List, Tuple
-
 
 class AgentTrainer:
     def __init__(self):
@@ -71,7 +71,7 @@ class GameTrainer:
             action = [int(x) for x in action.tolist()]
 
             # Make the move on the backend, and get the game state.
-            game_state: dict
+            game_state: GameState
             observation_: np.ndarray
             reward: float
             done: bool
@@ -85,7 +85,7 @@ class GameTrainer:
             observation = observation_
 
             # Print if the move was successful.
-            if game_state['successful'][0][0] == 1:
+            if game_state.successful[0][0] == 1:
                 print(f'Player {self.agent_trainer.player_id} successfully played move!')
                 print(action)
                 self.game_state_dao.addGamestate(self.game_response_parser.getGameStateMessage(),
@@ -114,7 +114,7 @@ class GameTrainer:
             action: List[int],
             current_agent: AgentTrainer,
             game_websocket_handler: GameWebSocketHandler
-    ) -> Tuple[dict, np.ndarray, float, bool]:
+    ) -> Tuple[GameState, np.ndarray, float, bool]:
         current_action = action.copy()
         current_action[0] += 1
 
@@ -122,17 +122,17 @@ class GameTrainer:
         game_websocket_handler.addMove(current_action, current_agent.player_id)
         game_state_str: str = game_websocket_handler.makeMove()
         self.game_response_parser.setMessage(game_state_str)
-        to_return: Tuple[dict, np.ndarray, float, bool] = (
+        to_return: Tuple[GameState, np.ndarray, float, bool] = (
             self.game_response_parser.getGameState(),
             self.game_response_parser.getGameStateAsObservation(),
-            self.game_response_parser.getReward(),
+            self.game_response_parser.getSuccessful(),
             self.game_response_parser.getGameDone()
         )
         current_action[0] -= 1
         return to_return
 
     def _get_next_player(self) -> str:
-        return str(self.game_response_parser.getGameState()['currentPlayer'][0][0])
+        return str(self.game_response_parser.getGameState().currentPlayer[0][0])
 
     def _update_agent(self, current_agent: AgentTrainer, observation: np.ndarray, action: List[int], probs: T.Tensor,
                       val: T.Tensor, reward: float, done: bool):
