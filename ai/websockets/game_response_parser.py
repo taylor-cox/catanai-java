@@ -3,8 +3,7 @@ import numpy as np
 from typing import List
 from itertools import chain
 from pydantic.tools import parse_obj_as
-
-from ai.websockets.game_state import GameState
+from websockets.game_state import GameState
 
 class GameResponseParser:
   ''' Dictionary respresenting current game state. '''
@@ -34,21 +33,37 @@ class GameResponseParser:
   def getGameStateAsObservation(self) -> np.ndarray:
     if self.game_state == {}:
       raise Exception('Game state is empty.')
-    return np.array(
-      list(
-        chain.from_iterable(
-          chain.from_iterable(
-            [
-              self.game_state.tiles,
-              self.game_state.playerPerspectiveResourceCards,
-              self.game_state.edges,
-              self.game_state.nodes,
-              self.game_state.ports,
-              self.game_state.playerMetadata,
-              self.game_state.lastRoll,
-              self.game_state.actionState
-            ]
-          )
-        )
-      )
-    )
+    arr = []
+    for val in self.game_state.tiles:
+      for val2 in val:
+        arr.append(val2)
+    
+    for val in self.game_state.playerPerspectiveResourceCards:
+      for val2 in val:
+        arr.append(val2)
+
+    for val in self.game_state.edges:
+      for val2 in val:
+        arr.append(val2)
+
+    for val in self.game_state.nodes:
+      for val2 in val:
+        arr.append(val2)
+    
+    for val in self.game_state.ports:
+      for val2 in val:
+        arr.append(val2)
+    
+    for val in self.game_state.playerMetadata:
+      for val2 in val:
+        arr.append(val2)
+    
+    for val in self.game_state.lastRoll:
+      for val2 in val:
+        arr.append(val2)
+    
+    for val in self.game_state.actionState:
+      for val2 in val:
+        arr.append(val2)
+    
+    return np.array(arr)
