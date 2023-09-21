@@ -1,8 +1,8 @@
 package com.catanai.server.model.action;
 
+import java.util.Arrays;
 import lombok.Getter;
 
-import java.util.Arrays;
 
 /**
 * Class representing other information about the current action.
