@@ -194,7 +194,7 @@ public class TestActionExecutor {
   }
 
   @Test
-  public void testRollAfterStartingTurns() {
+  public void testRollDiceActionState() {
     // Get through starting turns.
     for (int i = 0; i < 8; i++) {
       Assert.assertTrue(this.game.nextMove() && this.game.nextMove()); // Settlement and road.
@@ -223,5 +223,109 @@ public class TestActionExecutor {
       p.addNextMove(new int[] { 12, toBlockIndex, 0 }); // Add move robber action, steal from no player.
       Assert.assertTrue(this.game.nextMove()); // Move robber.
     }
+  }
+
+  @Test
+  public void testBusinessAsUsualActionState() {
+    // Get through starting turns.
+    for (int i = 0; i < 8; i++) {
+      Assert.assertTrue(this.game.nextMove() && this.game.nextMove()); // Settlement and road.
+    }
+    DeterministicPlayer p = this.players.get(0);
+    
+    // Set player's next move to roll.
+    p.addNextMove(new int[] { 15, 0 }); 
+    
+    // Check that the game's roll is 0 to start.
+    Assert.assertEquals(0, this.game.getLastDiceRollValue());
+    
+    // Assert that the player rolls the dice.
+    Assert.assertTrue(this.game.nextMove());
+
+    // Check that the game's roll is sensible after rolling dice.
+    Assert.assertTrue(this.game.getLastDiceRollValue() >= 2 && this.game.getLastDiceRollValue() <= 12);
+
+    // If the roll causes a dicard, add move robber action to player.
+    // We don't check if any player has to discard as no players have enough cards
+    // after the starting turns to discard.
+    if (this.game.getLastDiceRollValue() == 7) {
+      int currentRobberIndex = this.game.getBoard().getTileIndexCurrentlyBlocked();
+      int toBlockIndex = currentRobberIndex == 18 ? 17 : 18;
+      
+      p.addNextMove(new int[] { 12, toBlockIndex, 0 }); // Add move robber action, steal from no player.
+      Assert.assertTrue(this.game.nextMove()); // Move robber.
+    }
+
+    // Check that the game is in business as usual state.
+    Assert.assertEquals(
+        ActionState.BUSINESS_AS_USUAL,
+        this.game.getActionExecutor().getActionStateMachine().getCurrentActionState()
+    );
+  }
+
+  @Test
+  public void testDiscardActionState() {
+    // Get through starting turns.
+    for (int i = 0; i < 8; i++) {
+      Assert.assertTrue(this.game.nextMove() && this.game.nextMove()); // Settlement and road.
+    }
+    DeterministicPlayer p = this.players.get(0);
+    
+    // Set player's next move to roll.
+    p.addNextMove(new int[] { 15, 0 }); 
+    
+    // Check that the game's roll is 0 to start.
+    Assert.assertEquals(0, this.game.getLastDiceRollValue());
+    
+    // Assert that the player rolls the dice.
+    Assert.assertTrue(this.game.nextMove());
+
+    // Check that the game's roll is sensible after rolling dice.
+    Assert.assertTrue(this.game.getLastDiceRollValue() >= 2 && this.game.getLastDiceRollValue() <= 12);
+
+    // If the roll causes a dicard, add move robber action to player.
+    // We don't check if any player has to discard as no players have enough cards
+    // after the starting turns to discard.
+    if (this.game.getLastDiceRollValue() == 7) {
+      int currentRobberIndex = this.game.getBoard().getTileIndexCurrentlyBlocked();
+      int toBlockIndex = currentRobberIndex == 18 ? 17 : 18;
+      
+      p.addNextMove(new int[] { 12, toBlockIndex, 0 }); // Add move robber action, steal from no player.
+      Assert.assertTrue(this.game.nextMove()); // Move robber.
+    }
+
+    // Check that the game is in business as usual state.
+    Assert.assertEquals(
+        ActionState.BUSINESS_AS_USUAL,
+        this.game.getActionExecutor().getActionStateMachine().getCurrentActionState()
+    );
+  }
+
+  // Action State to Test
+  /* FIRST_SETTLEMENT(0),
+   * FIRST_ROAD(1),
+   * SECOND_SETTLEMENT(2),
+   * SECOND_ROAD(3),
+   * BUSINESS_AS_USUAL(4),
+   * ROLL_DICE(5),
+   * DISCARD(6),
+   * MOVE_ROBBER(7),
+   * TRADE(8),
+   * FINISHED(9);
+   */
+
+  @Test
+  public void testMoveRobberActionState() {
+    
+  }
+
+  @Test
+  public void testTradeActionState() {
+
+  }
+
+  @Test
+  public void testFinishedActionState() {
+
   }
 }
