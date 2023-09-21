@@ -19,6 +19,7 @@ class GameState(Base):
     lastRoll = Column(SmallInteger)
     currentPlayer = Column(SmallInteger)
     actionID = Column(SmallInteger)
+    numAttemptedActionsBeforeSuccessful = Column(BigInteger)
 
     def __repr__(self):
         return f"<GameState(id='{self.id})>"
