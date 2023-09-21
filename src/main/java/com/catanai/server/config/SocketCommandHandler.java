@@ -82,7 +82,7 @@ public class SocketCommandHandler {
     ObjectMapper objectMapper = new ObjectMapper();
     try {
       Map<String, int[][]> gameStateMap = this.game.getCurrentGameState().toMap();
-      gameStateMap.put("sucessful", new int[][]{{reward}});
+      gameStateMap.put("successful", new int[][]{{reward}});
       return objectMapper.writeValueAsString(gameStateMap);
     } catch (JsonProcessingException e) {
       e.printStackTrace();
