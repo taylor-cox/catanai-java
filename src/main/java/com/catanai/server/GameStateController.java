@@ -21,11 +21,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 @RequestMapping("api/v1")
 @CrossOrigin(origins = "*")
-public class MainController {
+public class GameStateController {
   /**
    * Returns random game with starting moves determined. TODO: change this.
    *
-   * @return gamestatew ith one player move
+   * @return gamestate with one player move
    */
   @GetMapping(path = "/randomGame", produces = MediaType.APPLICATION_JSON_VALUE)
   @ResponseBody
