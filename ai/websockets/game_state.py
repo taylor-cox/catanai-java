@@ -1,5 +1,5 @@
 from pydantic.dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 @dataclass
 class GameState(object):
@@ -9,10 +9,10 @@ class GameState(object):
   edges: List[List[int]]
   nodes: List[List[int]]
   ports: List[List[int]]
-  playerMetadata: List[List[int]]
   lastRoll: List[List[int]]
   currentPlayer: List[List[int]]
   actionID: List[List[int]]
   finished: List[List[int]]
   actionState: List[List[int]]
   successful: List[List[int]]
+  playerMetadata: List[List[int]]
