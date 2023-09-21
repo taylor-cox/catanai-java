@@ -42,6 +42,8 @@ public final class Game {
 
   private List<TradeOffer> tradeOffers;
 
+  private int nextRoll; /* Used only for testing. */
+
   /**
    * Creates a new Catan game with players @param players.
    *
@@ -293,5 +295,13 @@ public final class Game {
 
   public void setActionExecutor(ActionExecutor ae) {
     this.actionExecutor = ae;
+  }
+
+  public int getNextRoll() {
+    return nextRoll;
+  }
+
+  public void setNextRoll(int nextRoll) {
+    this.nextRoll = nextRoll;
   }
 }
