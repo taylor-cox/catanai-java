@@ -1,5 +1,5 @@
 import numpy as np
-from ai.websockets.game_state import GameState
+from websockets.game_state import GameState
 from ml.ppo import Agent
 from dao.dao import GameStateDAO
 from websockets.game_response_parser import GameResponseParser
@@ -28,9 +28,8 @@ class AgentTrainer:
             batch_size=self.batch_size,
             alpha=self.alpha,
             n_epochs=self.n_epochs,
-            input_dims=(286,)
+            input_dims=(281,)
         )
-
 
 class GameTrainer:
     def __init__(self, immediately_run_training: bool = False):
@@ -40,7 +39,7 @@ class GameTrainer:
 
         # Set up agent trainers.
         self.current_game_number: int = 0
-        self.n_games: int = 1
+        self.n_games: int = 10
         self.agent_trainer = AgentTrainer()
 
         # Start training if immediately_run_training is True.
@@ -64,6 +63,8 @@ class GameTrainer:
         observation: np.ndarray = self._new_game(game_websocket_handler)
 
         done: bool = False
+
+        num_actions_until_success: int = 0
         while not done:
             # Have agent choose an action with probs and val.
             action, probs, val = self.agent_trainer.agent.choose_action(observation)
@@ -89,7 +90,10 @@ class GameTrainer:
                 print(f'Player {self.agent_trainer.player_id} successfully played move!')
                 print(action)
                 self.game_state_dao.addGamestate(self.game_response_parser.getGameStateMessage(),
-                                                 self.current_game_number)
+                                                 self.current_game_number, num_actions_until_success)
+                num_actions_until_success = 0
+            else:
+                num_actions_until_success += 1
 
             # Update agent to act as next player
             self.agent_trainer.player_id = self._get_next_player()
@@ -106,7 +110,7 @@ class GameTrainer:
     def _new_game(self, game_websocket_handler: GameWebSocketHandler) -> np.ndarray:
         game_state_str: str = game_websocket_handler.newGame()
         self.game_response_parser.setMessage(game_state_str)
-        self.game_state_dao.addGamestate(game_state_str, self.current_game_number)
+        self.game_state_dao.addGamestate(game_state_str, self.current_game_number, 0)
         return self.game_response_parser.getGameStateAsObservation()
 
     def _make_move(
