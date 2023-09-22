@@ -20,7 +20,7 @@ class GameStateDAO:
     self.Session = sessionmaker(bind=self.engine)
     self.s = self.Session()
   
-  def addGamestate(self, gamestate: str, game_id: int, numActionsUntilSuccessful: int):
+  def addGamestate(self, gamestate: str, game_id: int, numActionsUntilSuccessful: int, reward: float):
     self.recreate_session()
     gamestateDict = json.loads(gamestate)
     gamestateToAdd = GameState(
@@ -36,7 +36,8 @@ class GameStateDAO:
       lastRoll = gamestateDict['lastRoll'][0][0],
       currentPlayer = gamestateDict['currentPlayer'][0][0],
       actionID = gamestateDict['actionID'][0][0],
-      numAttemptedActionsBeforeSuccessful = numActionsUntilSuccessful
+      numAttemptedActionsBeforeSuccessful = numActionsUntilSuccessful,
+      reward = reward
     )
     self.s.add(gamestateToAdd)
     self.s.commit()

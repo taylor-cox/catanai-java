@@ -65,6 +65,8 @@ class GameTrainer:
         done: bool = False
 
         num_actions_until_success: int = 0
+
+        previous_game_state: GameState | None = None
         while not done:
             # Have agent choose an action with probs and val.
             action, probs, val = self.agent_trainer.agent.choose_action(observation)
@@ -75,9 +77,13 @@ class GameTrainer:
             game_state: GameState
             observation_: np.ndarray
             reward: float
+            successful: float
             done: bool
-            game_state, observation_, reward, done = self._make_move(action, self.agent_trainer,
-                                                                     game_websocket_handler)
+            game_state, observation_, successful, done = self._make_move(action, self.agent_trainer, game_websocket_handler)
+
+            reward = self._calculate_reward(successful, game_state, previous_game_state, action, done, num_actions_until_success)
+
+            previous_game_state = game_state
 
             # Update agent metadata, and learn if necessary.
             self._update_agent(self.agent_trainer, observation, action, probs, val, reward, done)
@@ -87,10 +93,9 @@ class GameTrainer:
 
             # Print if the move was successful.
             if game_state.successful[0][0] == 1:
-                print(f'Player {self.agent_trainer.player_id} successfully played move!')
+                print(f'Player {self.agent_trainer.player_id} successfully played move after {num_actions_until_success} failed actions.')
                 print(action)
-                self.game_state_dao.addGamestate(self.game_response_parser.getGameStateMessage(),
-                                                 self.current_game_number, num_actions_until_success)
+                self.game_state_dao.addGamestate(self.game_response_parser.getGameStateMessage(), self.current_game_number, num_actions_until_success, reward)
                 num_actions_until_success = 0
             else:
                 num_actions_until_success += 1
@@ -110,7 +115,7 @@ class GameTrainer:
     def _new_game(self, game_websocket_handler: GameWebSocketHandler) -> np.ndarray:
         game_state_str: str = game_websocket_handler.newGame()
         self.game_response_parser.setMessage(game_state_str)
-        self.game_state_dao.addGamestate(game_state_str, self.current_game_number, 0)
+        self.game_state_dao.addGamestate(game_state_str, self.current_game_number, 0, 0)
         return self.game_response_parser.getGameStateAsObservation()
 
     def _make_move(
@@ -149,3 +154,27 @@ class GameTrainer:
         if (current_agent.n_steps % current_agent.N) == 0:
             current_agent.agent.learn()
             current_agent.learn_iters += 1
+
+    def _calculate_reward(self, successful: float, game_state: GameState, previous_game_state: GameState | None, action: List[int], done: bool, failed_actions: int) -> float:
+        reward: float = 0.0
+        # If the move was successful, add 1 to the reward. Otherwise, subtract 100.
+        if successful == 1:
+            if action[0] == 13 or action[0] == 14:
+                return 1.0
+            else:
+                reward += 10.0
+        else:
+            return -100.0
+        
+        # If the player gained a victory point, add 10 to the reward for each victory point.
+        if previous_game_state is not None:
+            previous_player_victory_points: int = previous_game_state.playerMetadata[int(self.agent_trainer.player_id) - 1][0]
+            current_victory_points: int = game_state.playerMetadata[int(self.agent_trainer.player_id) - 1][0]
+            reward += (current_victory_points - previous_player_victory_points) * 10.0
+        
+        if done:
+            reward += 100.0
+        
+        reward -= failed_actions * 0.5
+
+        return reward

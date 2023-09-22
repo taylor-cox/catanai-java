@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, ARRAY, BigInteger, SmallInteger
+from sqlalchemy import Column, ARRAY, BigInteger, SmallInteger, Float
 
 Base = declarative_base()
 
@@ -20,6 +20,7 @@ class GameState(Base):
     currentPlayer = Column(SmallInteger)
     actionID = Column(SmallInteger)
     numAttemptedActionsBeforeSuccessful = Column(BigInteger)
+    reward = Column(Float)
 
     def __repr__(self):
         return f"<GameState(id='{self.id})>"
