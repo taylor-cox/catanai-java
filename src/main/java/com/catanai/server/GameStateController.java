@@ -1,18 +1,24 @@
 package com.catanai.server;
 
+import com.catanai.server.dao.GameStatesDAO;
 import com.catanai.server.model.Game;
-import com.catanai.server.model.board.graph.Node;
 import com.catanai.server.model.gamestate.GameState;
 import com.catanai.server.model.player.DeterministicPlayer;
 import com.catanai.server.model.player.Player;
 import com.catanai.server.model.player.PlayerID;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
@@ -22,8 +28,13 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @RequestMapping("api/v1")
 @CrossOrigin(origins = "*")
 public class GameStateController {
+
+  @Autowired
+  private GameStatesDAO gameStatesDAO;
+
   /**
-   * Returns random game with starting moves determined. TODO: change this.
+   * Returns random game with starting moves determined.
+   * TODO: remove.
    *
    * @return gamestate with one player move
    */
@@ -63,10 +74,55 @@ public class GameStateController {
     return game.getCurrentGameState();
   }
 
-  @GetMapping(path = "/nodeEdgeMappings", produces = MediaType.APPLICATION_JSON_VALUE)
+  /**
+   * Returns node edge mappings.
+   *
+   * @return string of node-edge mappings.
+   */
+  @GetMapping(path = "/nodeTileMappings", produces = MediaType.TEXT_PLAIN_VALUE)
   @ResponseBody
-  public List<Node> nodeTileMappings() {
-    // return null;
-    return new ArrayList<Node>();
+  public String nodeTileMappings() {
+    try (Scanner s = new Scanner(new File("./node_tile_mapping.txt"))) {
+      String returnString = "";
+      while (s.hasNextLine()) {
+        returnString += s.nextLine();
+      }
+      s.close();
+      return returnString;
+    } catch (FileNotFoundException e) {
+      return "";
+    }
+  }
+
+  /**
+   * Returns node-edge mappings.
+   *
+   * @return node-edge mappings.
+   */
+  @GetMapping(path = "/nodeEdgeMappings", produces = MediaType.TEXT_PLAIN_VALUE)
+  @ResponseBody
+  public String nodeEdgeMappings() {
+    try (Scanner s = new Scanner(new File("./node_edge_mapping.txt"))) {
+      String returnString = "";
+      while (s.hasNextLine()) {
+        returnString += s.nextLine();
+      }
+      s.close();
+      return returnString;
+    } catch (FileNotFoundException e) {
+      return "";
+    }
+  }
+
+  /**
+   * Returns game with the given id.
+   *
+   * @param id id of the game to return.
+   * @return game with the given id.
+   */
+  @GetMapping(path = "game", produces = MediaType.APPLICATION_JSON_VALUE)
+  @ResponseBody
+  public List<Map<String, Object>> game(@RequestParam("gameId") int id) {
+    return gameStatesDAO.getGameStates(id);
   }
 }
