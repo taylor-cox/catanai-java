@@ -1,30 +1,54 @@
 import React from 'react';
 import './Navbar.css';
+import type { MenuProps } from 'antd';
+import { AppstoreOutlined, HomeOutlined, MailOutlined, SettingOutlined } from '@ant-design/icons';
+import { Menu } from 'antd';
 
-interface NavbarProps {
-  navOptions: NavPairArray;
-};
+type MenuItem = Required<MenuProps>['items'][number];
 
-interface NavPair {
-  name: string;
-  url: string;
-};
+function getItem(
+  label: React.ReactNode,
+  key: React.Key,
+  icon?: React.ReactNode,
+  children?: MenuItem[],
+  type?: 'group',
+): MenuItem {
+  return {
+    key,
+    icon,
+    children,
+    label,
+    type,
+  } as MenuItem;
+}
 
-export type NavPairArray = Array<NavPair>
+const items: MenuProps['items'] = [
+  getItem('Home', 'sub1', <HomeOutlined />),
 
-function Navbar(props: NavbarProps) {
+  getItem('Navigation Two', 'sub2', <AppstoreOutlined />),
+
+  { type: 'divider' },
+
+  getItem('Navigation Three', 'sub4', <SettingOutlined />),
+
+  getItem('Group', 'grp', null, [getItem('Option 13', '13'), getItem('Option 14', '14')], 'group'),
+];
+
+const Navbar: React.FC = () => {
+  const onClick: MenuProps['onClick'] = (e) => {
+    console.log('click ', e);
+  };
 
   return (
-    <div id="navbar">
-      {props.navOptions.map(navItem => {
-        return (
-          <div className="nav-item">
-            <a href={navItem.url}>{navItem.name}</a>
-          </div>
-        );
-      })}
-    </div>
+    <Menu
+      onClick={onClick}
+      style={{ width: 256 }}
+      defaultSelectedKeys={['1']}
+      defaultOpenKeys={['sub1']}
+      mode="inline"
+      items={items}
+    />
   );
-}
+};
 
 export default Navbar;
