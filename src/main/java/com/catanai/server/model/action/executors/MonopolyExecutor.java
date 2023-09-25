@@ -37,6 +37,10 @@ public class MonopolyExecutor implements SpecificActionExecutor {
     // Get the resource card type to monopolize.
     ResourceCard resourceCard = ResourceCard.valueOf(amd.getRelevantMetadata()[0]);
 
+    if (resourceCard == null) {
+      return false;
+    }
+
     // Get all the cards of that type from all players, and add them to the current player's hand.
     for (Player player : this.game.getPlayers()) {
       if (!p.equals(player)) {

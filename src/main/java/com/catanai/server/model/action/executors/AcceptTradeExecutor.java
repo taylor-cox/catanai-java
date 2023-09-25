@@ -6,11 +6,10 @@ import com.catanai.server.model.action.ActionState;
 import com.catanai.server.model.action.TradeOffer;
 import com.catanai.server.model.bank.card.ResourceCard;
 import com.catanai.server.model.player.Player;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Class which validates and executes accept trade action in game of Catan.

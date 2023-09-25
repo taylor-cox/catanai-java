@@ -7,11 +7,11 @@ import com.catanai.server.model.bank.card.ResourceCard;
 import com.catanai.server.model.board.graph.Node;
 import com.catanai.server.model.player.Player;
 import com.catanai.server.model.player.PlayerID;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.jetbrains.annotations.NotNull;
+
 
 /**
  * Class which validates and executes move robber action in game of Catan.
