@@ -8,11 +8,9 @@ import com.catanai.server.model.bank.card.ResourceCard;
 import com.catanai.server.model.board.graph.Node;
 import com.catanai.server.model.player.Player;
 import com.catanai.server.model.player.PlayerID;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Class which validates and executes play knight action in game of Catan.
@@ -34,8 +32,7 @@ public class KnightExecutor implements SpecificActionExecutor {
   }
 
   private boolean playKnight(ActionMetadata amd, Player p) {
-    int tileIndex = amd.getRelevantMetadata()[0];
-    int playerIDToStealFrom = amd.getRelevantMetadata()[1];
+    int playerIDToStealFromInt = amd.getRelevantMetadata()[1];
 
     // Cannot play another dev card if one was already played this turn.
     if (p.hasPlayedDevelopmentCardThisTurn()) {
@@ -47,12 +44,19 @@ public class KnightExecutor implements SpecificActionExecutor {
     }
 
     // Ensure player id is valid.
-    if (playerIDToStealFrom > 5 || playerIDToStealFrom < 1) {
+    if (playerIDToStealFromInt > 5 || playerIDToStealFromInt < 0) {
       return false;
     }
 
+    // Validate player to steal from.
+    int tileIndex = amd.getRelevantMetadata()[0];
+    PlayerID playerIDToStealFrom = PlayerID.valueOf(playerIDToStealFromInt);
+    if (playerIDToStealFrom == null && this.game.getBoard().placeRobber(tileIndex)) {
+      return true;
+    }
+    Player playerToStealFrom = this.game.getPlayerByID(playerIDToStealFrom);
+
     // Get nodes next to the tile
-    Player playerToStealFrom = this.game.getPlayerByID(Objects.requireNonNull(PlayerID.valueOf(playerIDToStealFrom)));
     List<Node> nodesOnTileWithBuildingsFromPlayerToStealFrom = 
         this.game.getBoard().getTiles().get(amd.getRelevantMetadata()[0]).getNodes()
         .stream()
@@ -60,6 +64,7 @@ public class KnightExecutor implements SpecificActionExecutor {
         .filter(node -> node.getBuilding().getPlayerId() == playerToStealFrom.getID())
         .collect(Collectors.toList());
     
+    // Validate that the tile has a building from the player to steal from.
     if (nodesOnTileWithBuildingsFromPlayerToStealFrom.isEmpty()) {
       return false;
     } else if (!this.game.getBoard().placeRobber(tileIndex)) {
