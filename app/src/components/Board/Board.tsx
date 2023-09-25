@@ -20,15 +20,15 @@ interface Edge {
   index: number
 };
 
-const CANVAS_WIDTH = 900;
-const CANVAS_HEIGHT = 900;
+const CANVAS_WIDTH = 850;
+const CANVAS_HEIGHT = 850;
 const BOARD_SIZE = 70;
 
 const PLAYER_COLORS = {
   P1: "#ff0000",
   P2: "#1e04c9",
   P3: "#fff700",
-  P4: "#eb0cc9"
+  P4: "#ffffff"
 };
 
 const TILE_COLORS: string[] = [
@@ -40,7 +40,7 @@ const TILE_COLORS: string[] = [
   "#c9280c"
 ]
 
-function Board(props: BoardProps) {
+function Board() {
   const [board, setBoard] = useState<catanapi.IBoard>();
   const canvasRef = useRef(null);
 
@@ -59,7 +59,7 @@ function Board(props: BoardProps) {
   return (
     <div id="board-container">
       <canvas id="board" ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} />
-      <p>{JSON.stringify(board)}</p>
+      {/* <p>{JSON.stringify(board)}</p> */}
     </div>
   );
 }
@@ -199,11 +199,6 @@ function drawBoard(board: catanapi.IBoard | undefined, canvasRef: React.MutableR
   board!.nodes!.forEach((node, index) => {
     drawSettlement(node, index, nodes[index]);
   });
-
-  // let edges = getNodesOfHexagons(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, BOARD_SIZE);
-  // board!.nodes!.forEach((node, index) => {
-  //   drawSettlement(node, index, nodes[index]);
-  // });
 }
 
 export default Board;
