@@ -1,4 +1,6 @@
-package com.catanai.server.model.player.action;
+package com.catanai.server.model.action;
+
+import lombok.Getter;
 
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -6,6 +8,7 @@ import java.util.stream.Stream;
 /**
 * Represents the possible actions a player can take during their turn.
 */
+@Getter
 public enum Action {
   // Build
   PLAY_ROAD(1), PLAY_SETTLEMENT(2), PLAY_CITY(3),
@@ -20,20 +23,24 @@ public enum Action {
   // Discard cards (7 rolled and 8+ cards in hand.)
   DISCARD(13),
   // End turn
-  END_TURN(14);
+  END_TURN(14),
+  // Roll dice
+  ROLL_DICE(15);
   
   private final int value;
   
-  private Action(int value) {
+  Action(int value) {
     this.value = value;
   }
-  
-  public int getValue() {
-    return this.value;
-  }
 
+  /**
+   * Returns the Action corresponding to the value.
+   *
+   * @param value value of the action.
+   * @return Action corresponding to the value.
+   */
   public static Action valueOf(int value) {
-    if (value < 1 || value > 14) {
+    if (value < 1 || value > 15) {
       return null;
     }
     return Stream.of(values())

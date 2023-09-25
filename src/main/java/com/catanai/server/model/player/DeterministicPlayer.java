@@ -1,32 +1,37 @@
 package com.catanai.server.model.player;
 
+import com.catanai.server.model.action.ActionMetadata;
 import com.catanai.server.model.gamestate.GameState;
-import com.catanai.server.model.player.action.ActionMetadata;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.Queue;
 
 /**
  * Player where each action is decided by an outside source.
  */
 public final class DeterministicPlayer extends Player {
-  private int[][] nextMoveMetadata;
-  private int currentMoveIndex;
+  private Queue<int[]> moveMetadatas;
 
-  public DeterministicPlayer(PlayerId id) {
+  public DeterministicPlayer(PlayerID id) {
     super(id);
-    this.currentMoveIndex = 0;
+    this.moveMetadatas = new LinkedList<int[]>();
   }
 
   @Override
   public int[] play(GameState gameState) {
-    if (currentMoveIndex > this.nextMoveMetadata.length) {
-      return null;
-    }
-    int oldIndex = currentMoveIndex;
-    currentMoveIndex += 1;
-    return this.nextMoveMetadata[oldIndex];
+    // int[] move = this.moveMetadatas.poll();
+    int[] move = this.moveMetadatas.remove();
+    ActionMetadata metadata = new ActionMetadata(move);
+    this.previousAction = metadata;
+    return move;
   }
 
-  public void setNextMoveMetadata(int[][] metadata) {
-    this.nextMoveMetadata = metadata;
+  public void addNextMove(int[] move) {
+    this.moveMetadatas.add(move);
+  }
+
+  public void addAllMoves(int[][] moves) {
+    this.moveMetadatas.addAll(Arrays.asList(moves));
   }
 
   /**
@@ -35,9 +40,12 @@ public final class DeterministicPlayer extends Player {
    * @param metadata metadata refering to next move.
    */
   public void setNextMoveMetadata(ActionMetadata[] metadata) {
-    this.nextMoveMetadata = new int[metadata.length][]; 
-    for (int i = 0; i < metadata.length; i++) {
-      this.nextMoveMetadata[i] = metadata[i].getMetadata();
+    for (ActionMetadata meta : metadata) {
+      this.moveMetadatas.add(meta.getMetadata());
     }
+  }
+
+  public int[] getNextMoveMetadata() {
+    return this.moveMetadatas.peek();
   }
 }

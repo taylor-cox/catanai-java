@@ -1,5 +1,8 @@
 package com.catanai.server.model;
 
+import com.catanai.server.model.action.ActionExecutor;
+import com.catanai.server.model.action.ActionMetadata;
+import com.catanai.server.model.action.TradeOffer;
 import com.catanai.server.model.bank.Dealer;
 import com.catanai.server.model.board.Board;
 import com.catanai.server.model.board.building.Settlement;
@@ -8,35 +11,38 @@ import com.catanai.server.model.board.tile.Terrain;
 import com.catanai.server.model.board.tile.Tile;
 import com.catanai.server.model.gamestate.GameState;
 import com.catanai.server.model.player.Player;
-import com.catanai.server.model.player.action.Action;
-import com.catanai.server.model.player.action.ActionExecutor;
-import com.catanai.server.model.player.action.ActionMetadata;
+import com.catanai.server.model.player.PlayerID;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
 /**
- * Represents game of Catan.
+ * Handles high-level game logic.
  */
 public final class Game {
   private List<? extends Player> players;
   private Player currentPlayer;
-  private Board board;
-  private Dealer dealer;
-  private GameState currentGameState;
-  private List<GameState> gameStates;
-  private boolean ended;
-  private int lastDiceRollValue;
-  private ActionExecutor actionExecutor;
-  private State currentState;
-  private Settlement previousSettlement;
 
-  private enum State {
-    START_BUILD, START_ROAD, START2_BUILD, START2_ROAD, BUSINESS_AS_USUAL, TRADE
-  }
+  private Board board;
+
+  private Dealer dealer;
+
+  private List<GameState> gameStates;
+  private GameState currentGameState;
+
+  private boolean ended;
+
+  private int lastDiceRollValue;
+
+  private ActionExecutor actionExecutor;
+
+  private List<TradeOffer> tradeOffers;
+
+  private int nextRoll; /* Used only for testing. */
 
   /**
    * Creates a new Catan game with players @param players.
@@ -54,25 +60,8 @@ public final class Game {
     this.currentGameState = new GameState(this);
     this.gameStates.add(this.currentGameState);
     this.actionExecutor = new ActionExecutor(this);
-    this.currentState = State.START_BUILD;
+    this.tradeOffers = new ArrayList<TradeOffer>();
   }
-
-  // /**
-  //  * Resets the game to initial state.
-  //  */
-  // private void resetHelper() {
-  //   for (Player p : this.players) {
-  //     p.reset();
-  //   }
-  //   this.board = new Board();
-  //   this.dealer = new Dealer();
-  //   this.gameStates = new ArrayList<GameState>();
-  //   this.ended = false;
-  //   this.lastDiceRollValue = 0;
-  //   this.currentGameState = new GameState(this);
-  //   this.gameStates.add(this.currentGameState);
-  //   this.actionExecutor = new ActionExecutor(this);
-  // }
 
   /**
    * Updates the gamestate, and adds it to the list of gamestates.
@@ -87,120 +76,15 @@ public final class Game {
   // ****************************************************************************
 
   /**
-   * Play the starting turns of the game, and add them all to gamestates.
-   */
-  public void startingTurns() {
-    for (GameState gs : this.actionExecutor.startingTurns(currentGameState)) {
-      this.gameStates.add(gs);
-    }
-    this.currentGameState = this.gameStates.get(this.gameStates.size() - 1);
-  }
-
-  private void makeMove(Player currentPlayer) {
-    switch (this.currentState) {
-      case START_BUILD:
-        handleStartBuild(currentPlayer);
-        break;
-      case START_ROAD:
-        handleStartRoad(currentPlayer);
-        break;
-      case START2_BUILD:
-        handleStartBuild2(currentPlayer);
-        break;
-      case START2_ROAD:
-        handleStartRoad2(currentPlayer);
-        break;
-      case BUSINESS_AS_USUAL:
-        handleTurn(currentPlayer);
-        break;
-      default:
-        return;
-    }
-  }
-
-  private void handleTurn(Player curPlayer) {
-    int diceRoll = this.rollDice();
-    if (diceRoll != 7) {
-      this.produce(diceRoll);
-    } else {
-      this.actionExecutor.makePlayersDiscard();
-      this.actionExecutor.makePlayerMoveRobber(curPlayer, this.currentGameState);
-    }
-    ActionMetadata amd = new ActionMetadata(
-        curPlayer.play(this.currentGameState));
-    while (amd.getAction() != Action.END_TURN) {
-      if (this.actionExecutor.doAction(amd, curPlayer)) {
-        // TODO: Something with reward function.
-      }
-      this.updateGamestate();
-      amd = new ActionMetadata(curPlayer.play(this.currentGameState));
-    }
-  }
-
-  /**
-   * Handles second starting road of a player.
-   *
-   * @param currentPlayer current player in game
-   */
-  private void handleStartRoad2(Player currentPlayer) {
-    this.currentGameState = 
-        this.actionExecutor.secondRoad(currentPlayer, this.previousSettlement, currentGameState);
-    this.gameStates.add(currentGameState);
-    if (this.gameStates.size() >= 16) {
-      this.currentState = State.BUSINESS_AS_USUAL;
-    } else {
-      this.currentState = State.START2_BUILD;
-      this.currentPlayer = this.players.get(this.currentPlayer.getId().getValue() - 1);
-    }
-  }
-
-  /**
-   * Handles second starting settlement of player.
-   *
-   * @param currentPlayer current game player.
-   */
-  private void handleStartBuild2(Player currentPlayer) {
-    ActionExecutor.SettlementGameStatePair sgsp = 
-        this.actionExecutor.secondSettlement(currentPlayer, currentGameState);
-    this.previousSettlement = sgsp.getSettlement();
-    this.currentGameState = sgsp.getGameState();
-    this.gameStates.add(currentGameState);
-    this.currentState = State.START2_ROAD;
-  }
-
-  /**
-   * Handles starting road of current player.
-   *
-   * @param currentPlayer current game player.
-   */
-  private void handleStartRoad(Player currentPlayer) {
-    this.currentGameState = this.actionExecutor.startingSettlement(currentPlayer, currentGameState);
-    this.gameStates.add(currentGameState);
-    if (this.gameStates.size() >= 8) {
-      this.currentState = State.START2_BUILD;
-    } else {
-      this.currentState = State.START_BUILD;
-      this.currentPlayer = this.players.get(this.currentPlayer.getId().getValue() - 1);
-    }
-  }
-
-  /**
-   * Handles starting settlement of player.
-   *
-   * @param currentPlayer current game player.
-   */
-  private void handleStartBuild(Player currentPlayer) {
-    this.currentGameState = this.actionExecutor.startingSettlement(currentPlayer, currentGameState);
-    this.gameStates.add(currentGameState);
-    this.currentState = State.START_ROAD;
-  }
-
-  /**
    * Represents the next turn of the Catan game.
    */
-  public void nextTurn() {
-    Player curPlayer = this.currentPlayer;
-    this.makeMove(curPlayer);
+  public boolean nextMove() {
+    ActionMetadata playerAction = new ActionMetadata(currentPlayer.play(this.currentGameState));
+    if (this.actionExecutor.doAction(playerAction, currentPlayer)) {
+      this.updateGamestate();
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -212,9 +96,9 @@ public final class Game {
    *
    * @param diceRoll the number of the dice roll
    */
-  private void produce(int diceRoll) {
-    HashMap<Player, HashMap<Terrain, Integer>> resources = this.getResourcesToProduce(diceRoll);
-    HashMap<Terrain, Integer> amountToProduce = this.getAmountOfResourcesToProduce(resources);
+  public void produce(int diceRoll) {
+    Map<Player, Map<Terrain, Integer>> resources = this.getResourcesToProduce(diceRoll);
+    Map<Terrain, Integer> amountToProduce = this.getAmountOfResourcesToProduce(resources);
     Set<Terrain> doNotProduce = this.getResourcesUnableToProduce(resources, amountToProduce);
 
     // Give all players resources for the roll
@@ -239,10 +123,10 @@ public final class Game {
    * @return a map containing each player, and each terrain they are
    *         expecting production from
    */
-  private HashMap<Player, HashMap<Terrain, Integer>> getResourcesToProduce(
+  private Map<Player, Map<Terrain, Integer>> getResourcesToProduce(
       int diceRoll) {
     // Calculate the amount of resources which should be given to each player.
-    HashMap<Player, HashMap<Terrain, Integer>> resources = new HashMap<>();
+    Map<Player, Map<Terrain, Integer>> resources = new HashMap<>();
     for (Tile t : this.board.getTiles()) {
       if (t.getTerrainChit().getValue() == diceRoll) {
         for (Node n : t.getNodes()) {
@@ -254,7 +138,7 @@ public final class Game {
               resourceAmt = 2;
             }
 
-            Player p = this.players.get(n.getBuilding().getPlayerId().getValue());
+            Player p = this.players.get(n.getBuilding().getPlayerId().getValue() - 1);
             resources.putIfAbsent(p, new HashMap<Terrain, Integer>());
             resources.get(p).merge(
                 t.getTerrain(),
@@ -277,8 +161,8 @@ public final class Game {
    * @return amount of resources needed to give all player's their expected
    *         resource income
    */
-  private HashMap<Terrain, Integer> getAmountOfResourcesToProduce(
-      HashMap<Player, HashMap<Terrain, Integer>> resources) {
+  private Map<Terrain, Integer> getAmountOfResourcesToProduce(
+      Map<Player, Map<Terrain, Integer>> resources) {
     // For each resource, determine the amount which the bank has to produce
     // to give to all players.
     HashMap<Terrain, Integer> amountToProduce = new HashMap<Terrain, Integer>();
@@ -302,8 +186,8 @@ public final class Game {
    * @return the set of terrains which cannot be produced
    */
   private Set<Terrain> getResourcesUnableToProduce(
-      HashMap<Player, HashMap<Terrain, Integer>> resources,
-      HashMap<Terrain, Integer> amountToProduce) {
+      Map<Player, Map<Terrain, Integer>> resources,
+      Map<Terrain, Integer> amountToProduce) {
     // Construct a set of resources which cannot be produced due to the
     // size of the resource bank being to small.
     Set<Terrain> doNotProduce = new HashSet<Terrain>();
@@ -312,7 +196,7 @@ public final class Game {
         return;
       }
       resources.forEach((player, terrainMap) -> {
-        if (terrainMap.get(terrain) == amount) {
+        if (terrainMap.get(terrain).equals(amount)) {
           return;
         }
       });
@@ -326,7 +210,7 @@ public final class Game {
    *
    * @return a value between 2-12 representing two d6 rolls.
    */
-  private int rollDice() {
+  public int rollDice() {
     Random rand = new Random();
     int low = 1;
     int high = 6;
@@ -373,22 +257,51 @@ public final class Game {
     return this.lastDiceRollValue;
   }
 
-  /**
-   * Whether or not the current game is in it's starting turns or not.
-   *
-   * @return whether the game is in its starting turns or not.
-   */
-  public boolean startingTurnSettlement() {
-    return this.currentState == State.START_BUILD 
-        || this.currentState == State.START2_BUILD;
-  }
-
-  public boolean startingTurnRoad() {
-    return this.currentState == State.START_ROAD 
-        || this.currentState == State.START2_ROAD;
-  }
-
-  public void setPlayers(ArrayList<Player> players) {
+  public void setPlayers(List<Player> players) {
     this.players = players;
+  }
+
+  public Player getPlayerByID(PlayerID playerID) {
+    return this.players.get(playerID.getValue() - 1);
+  }
+
+  public int getLastAction() {
+    return this.actionExecutor == null ? 0 : this.actionExecutor.getLastActionMetadata().getAction().getValue();
+  }
+
+  public void addTradeOffer(TradeOffer tradeOffer) {
+    this.tradeOffers.add(tradeOffer);
+  }
+
+  public void removeAllTradeOffers() {
+    this.tradeOffers.clear();
+  }
+
+  public List<TradeOffer> getTradeOffers() {
+    return this.tradeOffers;
+  }
+
+  public void removeTradeOffer(TradeOffer tradeOffer) {
+    this.tradeOffers.remove(tradeOffer);
+  }
+
+  public void setCurrentPlayer(Player p) {
+    this.currentPlayer = p;
+  }
+
+  public ActionExecutor getActionExecutor() {
+    return this.actionExecutor;
+  }
+
+  public void setActionExecutor(ActionExecutor ae) {
+    this.actionExecutor = ae;
+  }
+
+  public int getNextRoll() {
+    return nextRoll;
+  }
+
+  public void setNextRoll(int nextRoll) {
+    this.nextRoll = nextRoll;
   }
 }

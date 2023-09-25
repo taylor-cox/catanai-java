@@ -31,10 +31,18 @@ build/
 
 ### VS Code ###
 .vscode/
-src/main/java/com/catanai/server/catanai-java.code-workspace
+code-workspace.code-workspace
 
 ### NPM ###
 node_modules/
 
 ### Python ###
 venv/
+__pycache__/
+tmp/
+
+### Examples ###
+ai/main_test.py
+ai/ppo_torch.py
+/java-workspace.code-workspace
+/qodana.yaml

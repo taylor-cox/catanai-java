@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 /**
  * Represents the ID of a Catan player.
  */
-public enum PlayerId {
+public enum PlayerID {
   ONE(1),
   TWO(2),
   THREE(3),
@@ -15,7 +15,7 @@ public enum PlayerId {
   
   private final int value;
 
-  private PlayerId(int value) {
+  PlayerID(int value) {
     this.value = value;
   }
   
@@ -34,11 +34,11 @@ public enum PlayerId {
    * @param value value associated with player id
    * @return player id associated with value; null if no associated player id
    */
-  public static PlayerId valueOf(int value) {
-    List<PlayerId> possiblePlayerIds = Arrays.stream(values())
+  public static PlayerID valueOf(int value) {
+    List<PlayerID> possiblePlayerIds = Arrays.stream(values())
         .filter(resource -> resource.value == value)
         .collect(Collectors.toList());
-    if (possiblePlayerIds.size() <= 0) {
+    if (possiblePlayerIds.isEmpty()) {
       return null;
     } else {
       return possiblePlayerIds.get(0);

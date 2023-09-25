@@ -19,7 +19,7 @@ public enum Port {
    *
    * @param value value of the port.
    */
-  private Port(int value) {
+  Port(int value) {
     this.value = value;
   }
   

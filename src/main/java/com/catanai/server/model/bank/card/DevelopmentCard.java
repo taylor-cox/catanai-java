@@ -12,7 +12,7 @@ public enum DevelopmentCard implements Card {
   
   private final int value;
   
-  private DevelopmentCard(int value) {
+  DevelopmentCard(int value) {
     this.value = value;
   }
   

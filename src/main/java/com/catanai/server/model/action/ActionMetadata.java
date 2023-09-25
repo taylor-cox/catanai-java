@@ -1,12 +1,15 @@
-package com.catanai.server.model.player.action;
+package com.catanai.server.model.action;
 
 import java.util.Arrays;
+import lombok.Getter;
+
 
 /**
 * Class representing other information about the current action.
 * For instance, if Action == PLAY_ROAD, contains information about where to place
 * said road.
 */
+@Getter
 public final class ActionMetadata {
   Action action;
   int[] metadata;
@@ -18,7 +21,6 @@ public final class ActionMetadata {
    * @param metadata metadata pertaining to action.
    */
   public ActionMetadata(int[] metadata) {
-    // assert metadata.length == 11 : "int[] metadata must be of size 11.";
     this.action = Action.valueOf(metadata[0]);
     this.metadata = metadata;
     this.populateRelevantMetadata();
@@ -69,7 +71,6 @@ public final class ActionMetadata {
         break;
       case DRAW_DEVELOPMENT_CARD:
       case END_TURN:
-        // No relevant metadata.
         break;
       case DISCARD:
         // Contains information about the amount of types of resource cards to discard.
@@ -79,17 +80,5 @@ public final class ActionMetadata {
         break;
     }
   }
-  
-  public Action getAction() {
-    return this.action;
-  }
-  
-  public int[] getMetadata() {
-    return this.metadata;
-  }
-  
-  public int[] getRelevantMetadata() {
-    return this.relevantMetadata;
-  }
-  
+
 }

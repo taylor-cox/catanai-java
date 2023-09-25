@@ -4,14 +4,15 @@ import com.catanai.server.model.board.building.Building;
 import com.catanai.server.model.board.tile.Port;
 import com.catanai.server.model.board.tile.Terrain;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
 * Represents a node on the board (i.e. anywhere a building may be placed.)
 */
 public final class Node {
   private int index;
-  private ArrayList<Edge> connectedEdges;
-  private ArrayList<Terrain> produces;
+  private List<Edge> connectedEdges;
+  private List<Terrain> produces;
   private Building building;
   private Port port;
   private boolean blocked;
@@ -46,7 +47,7 @@ public final class Node {
     this.index = index;
   }
   
-  public ArrayList<Edge> getConnectedEdges() {
+  public List<Edge> getConnectedEdges() {
     return this.connectedEdges;
   }
   
@@ -54,7 +55,7 @@ public final class Node {
     this.connectedEdges.add(edge);
   }
   
-  public ArrayList<Terrain> getProduces() {
+  public List<Terrain> getProduces() {
     return this.produces;
   }
   

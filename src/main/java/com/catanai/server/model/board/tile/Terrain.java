@@ -24,7 +24,7 @@ public enum Terrain {
    *
    * @param id id of the terrain.
    */
-  private Terrain(int id) {
+  Terrain(int id) {
     this.value = id;
   }
   

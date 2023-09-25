@@ -1,6 +1,6 @@
 package com.catanai.server.model.board.building;
 
-import com.catanai.server.model.player.PlayerId;
+import com.catanai.server.model.player.PlayerID;
 
 /**
 * Represents a player settlement.
@@ -21,7 +21,7 @@ public final class Settlement extends Building {
   * @param playerId the player who placed the settlement.
   * @param initialPlacement if the settlement was an initial placement.
   */
-  public Settlement(int placement, PlayerId playerId, boolean initialPlacement) {
+  public Settlement(int placement, PlayerID playerId, boolean initialPlacement) {
     this.placement = placement;
     this.playerId = playerId;
     this.initialPlacement = initialPlacement;

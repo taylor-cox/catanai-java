@@ -1,6 +1,6 @@
 package com.catanai.server.model.board.building;
 
-import com.catanai.server.model.player.PlayerId;
+import com.catanai.server.model.player.PlayerID;
 
 /**
 * Represents a player road.
@@ -8,7 +8,7 @@ import com.catanai.server.model.player.PlayerId;
 public final class Road extends Building {
   private boolean startingPlacement;
 
-  public Road(int placement, PlayerId playerId) {
+  public Road(int placement, PlayerID playerId) {
     this.placement = placement;
     this.playerId = playerId;
   }
@@ -20,7 +20,7 @@ public final class Road extends Building {
    * @param playerId player placing road
    * @param startingPlacement whether this is a starting road or not.
    */
-  public Road(int placement, PlayerId playerId, boolean startingPlacement) {
+  public Road(int placement, PlayerID playerId, boolean startingPlacement) {
     this.placement = placement;
     this.playerId = playerId;
     this.startingPlacement = startingPlacement;

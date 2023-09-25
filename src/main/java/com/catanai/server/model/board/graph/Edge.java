@@ -2,6 +2,7 @@ package com.catanai.server.model.board.graph;
 
 import com.catanai.server.model.board.building.Road;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
 * Represents an edge connecting two roads on the board.
@@ -10,7 +11,7 @@ public final class Edge {
   /** Edge has an index from 0-71. */
   private int index;
   /** Represents the nodes connected to the edge. */
-  private ArrayList<Node> nodes;
+  private List<Node> nodes;
   private Road road;
   
   /**
@@ -54,7 +55,7 @@ public final class Edge {
     this.nodes.add(node);
   }
   
-  public ArrayList<Node> getNodes() {
+  public List<Node> getNodes() {
     return this.nodes;
   }
   

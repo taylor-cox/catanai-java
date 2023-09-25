@@ -61,7 +61,7 @@ public final class NodeMapper {
   /**
   * Represents 2 nodes attached to a given port.
   */
-  private class PortNodes {
+  private static class PortNodes {
     public PortNodes(int n1, int n2) {
       this.n1 = n1;
       this.n2 = n2;

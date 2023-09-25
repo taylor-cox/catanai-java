@@ -11,18 +11,29 @@ import com.catanai.server.model.board.tile.TileGenerator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.Getter;
 
 /**
 * Represents the full game board.
 */
 public final class Board {
-  private final int numNodes = 54;
-  private final int numEdges = 72;
-  private ArrayList<Node> nodes;
-  private ArrayList<Edge> edges;
-  private ArrayList<Tile> tiles;
+  private static final int numNodes = 54;
+  private static final int numEdges = 72;
+
+  @Getter
+  private List<Node> nodes;
+
+  @Getter
+  private List<Edge> edges;
+
+  @Getter
+  private List<Tile> tiles;
+
+  @Getter
   private int tileIndexCurrentlyBlocked;
-  private ArrayList<Node> portNodes;
+
+  @Getter
+  private List<Node> portNodes;
   
   /**
    * Constructs a board with all nodes, edges and tiles.
@@ -105,7 +116,7 @@ public final class Board {
     }
 
     // Check if any of the surrounding nodes have a settlement by the same player.
-    ArrayList<Node> curEdgeNodes = curEdge.getNodes();
+    List<Node> curEdgeNodes = curEdge.getNodes();
     boolean hasBuildingOneNodeAway = curEdgeNodes
         .stream()
         .anyMatch(
@@ -113,24 +124,18 @@ public final class Board {
             && node.getBuilding().getPlayerId() == road.getPlayerId()
         );
     if (hasBuildingOneNodeAway) {
-      curEdge.setRoad(road);
       return true;
     }
 
     // Check if any of the surrounding edges have a road by the same player.
-    List<Edge> oneEdgeAway = curEdgeNodes
-        .stream()
+    List<Edge> oneEdgeAway = curEdgeNodes.stream()
         .map((node) -> node.getConnectedEdges())
         .flatMap(List::stream)
         .filter((edge) -> !edge.equals(curEdge))
         .collect(Collectors.toList());
-    boolean hasRoadOneEdgeAway = oneEdgeAway
-        .stream()
+    
+    return oneEdgeAway.stream()
         .anyMatch((edge) -> edge.hasRoad() && edge.getRoad().getPlayerId() == road.getPlayerId());
-    if (hasRoadOneEdgeAway) {
-      return true;
-    }
-    return false;
   }
 
   /**
@@ -164,7 +169,7 @@ public final class Board {
     }
 
     // Check if there are any settlements within 1 edge of the given node.
-    ArrayList<Edge> connectedEdges = curNode.getConnectedEdges();
+    List<Edge> connectedEdges = curNode.getConnectedEdges();
     boolean buildingOneNodeAway = connectedEdges
         .stream()
         .map((edge) -> edge.getNodes())
@@ -183,17 +188,10 @@ public final class Board {
     }
 
     // Check if there is a road nearby, if not first settlement
-    boolean ownedRoadNearby = connectedEdges
-        .stream()
+    return connectedEdges.stream()
         .anyMatch(
           (edge) -> edge.hasRoad() && edge.getRoad().getPlayerId() == settlement.getPlayerId()
         );
-
-    if (ownedRoadNearby) {
-      return true;
-    }
-
-    return false;
   }
 
   /**
@@ -221,13 +219,9 @@ public final class Board {
   public boolean canPlaceCity(City city) {
     Node curNode = this.nodes.get(city.getPlacement());
 
-    if (curNode.hasBuilding()
+    return curNode.hasBuilding()
         && curNode.getBuilding() instanceof Settlement
-        && curNode.getBuilding().getPlayerId() == city.getPlayerId()) {
-      return true;
-    }
-
-    return false;
+        && curNode.getBuilding().getPlayerId() == city.getPlayerId();
   }
 
   /**
@@ -244,29 +238,5 @@ public final class Board {
     this.tiles.get(tileIndex).setBlocked(true);
     this.tileIndexCurrentlyBlocked = tileIndex;
     return true;
-  }
-  
-  //****************************************************************************
-  //*************************** Getters and setters ****************************
-  //****************************************************************************
-  
-  public ArrayList<Node> getNodes() {
-    return this.nodes;
-  }
-  
-  public ArrayList<Edge> getEdges() {
-    return this.edges;
-  }
-  
-  public ArrayList<Tile> getTiles() {
-    return this.tiles;
-  }
-  
-  public ArrayList<Node> getPortNodes() {
-    return this.portNodes;
-  }
-
-  public int getTileIndexCurrentlyBlocked() {
-    return this.tileIndexCurrentlyBlocked;
   }
 }

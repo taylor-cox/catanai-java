@@ -13,6 +13,7 @@ import com.catanai.server.model.player.Player;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
 * Respresents all Catan game data as arrays of integers.
@@ -65,15 +66,9 @@ public final class GameState {
   
   /** Contains the last dice roll value. */
   private int lastDiceRollValue;
-  
-  /** Order of all the cards. This will stay consistent whenever reffering to cards. */
-  private final ResourceCard[] orderOfCards = {
-    ResourceCard.WOOL,
-    ResourceCard.GRAIN,
-    ResourceCard.LUMBER,
-    ResourceCard.ORE,
-    ResourceCard.BRICK,
-  };
+
+  /** Contains information on the last action played by the player. */
+  private int lastAction;
   
   /**
    * Creates a new gamestate according to @param game.
@@ -91,6 +86,7 @@ public final class GameState {
     this.ports = new int[9];
     this.playerMetadata = new int[4][8];
     this.lastDiceRollValue = game.getLastDiceRollValue();
+    this.lastAction = game.getLastAction();
     
     // Populate all class variables.
     this.populateTiles();
@@ -111,7 +107,7 @@ public final class GameState {
   *   -> Tile 1 has terrain 2 and terrain chit 5
   */
   private void populateTiles() {
-    ArrayList<Tile> tiles = game.getBoard().getTiles();
+    List<Tile> tiles = game.getBoard().getTiles();
     for (int i = 0; i < tiles.size(); i++) {
       Tile curTile = tiles.get(i);
       this.tiles[i] = new int[] {
@@ -133,7 +129,7 @@ public final class GameState {
   *   -> the development bank has a size of 7
   */
   private void populateBanks() {
-    HashMap<ResourceCard, ResourceBank> banks = this.game.getDealer().getResourceBanks();
+    Map<ResourceCard, ResourceBank> banks = this.game.getDealer().getResourceBanks();
     ResourceCard[] orderOfBanks = {
       ResourceCard.WOOL,
       ResourceCard.GRAIN,
@@ -168,22 +164,14 @@ public final class GameState {
   private void populatePlayerPerspectiveResourceCards() {
     for (int i = 0; i < this.game.getPlayers().size(); i++) {
       Player curPlayer = this.game.getPlayers().get(i);
-      List<ResourceCard> curCards = 
+      Map<ResourceCard, Integer> numCards = 
           curPlayer.equals(this.game.getCurrentPlayer()) 
           ? curPlayer.getResourceCards()
           : curPlayer.getKnownCards();
-      // Initialize HashMap.
-      HashMap<ResourceCard, Integer> numCards = new HashMap<>();
-      for (ResourceCard card : orderOfCards) {
-        numCards.put(card, 0);
-      }
-      // Add to hashmap the number of cards of type found.
-      for (ResourceCard card : curCards) {
-        numCards.merge(card, 1, (a, b) -> a + b);
-      }
       // Add cards to append to playerResourceCards.
       ArrayList<Integer> toAddToPlayerResourceCards = new ArrayList<Integer>();
-      for (ResourceCard card : orderOfCards) {
+      for (int j = 0; j < 5; j++) {
+        ResourceCard card = ResourceCard.valueOf(j);
         toAddToPlayerResourceCards.add(numCards.get(card));
       }
       playerPerspectiveResourceCards[i] = new int[5];
@@ -208,19 +196,11 @@ public final class GameState {
   private void populatePlayerFullResourceCards() {
     for (int i = 0; i < this.game.getPlayers().size(); i++) {
       Player curPlayer = this.game.getPlayers().get(i);
-      List<ResourceCard> curCards = curPlayer.getResourceCards();
-      // Initialize HashMap.
-      HashMap<ResourceCard, Integer> numCards = new HashMap<>();
-      for (ResourceCard card : orderOfCards) {
-        numCards.put(card, 0);
-      }
-      // Add to hashmap the number of cards of type found.
-      for (ResourceCard card : curCards) {
-        numCards.merge(card, 1, (a, b) -> a + b);
-      }
+      Map<ResourceCard, Integer> numCards = curPlayer.getResourceCards();
       // Add cards to append to playerResourceCards.
       ArrayList<Integer> toAddToPlayerResourceCards = new ArrayList<Integer>();
-      for (ResourceCard card : orderOfCards) {
+      for (int j = 0; j < 5; j++) {
+        ResourceCard card = ResourceCard.valueOf(j);
         toAddToPlayerResourceCards.add(numCards.get(card));
       }
       playerFullResourceCards[i] = new int[5];
@@ -243,7 +223,7 @@ public final class GameState {
   * etc... for all 72 possible edges on the board.
   */
   private void populateEdges() {
-    ArrayList<Edge> gameEdges = this.game.getBoard().getEdges();
+    List<Edge> gameEdges = this.game.getBoard().getEdges();
     for (int i = 0; i < this.edges.length; i++) {
       if (!gameEdges.get(i).hasRoad()) {
         this.edges[i] = 0;
@@ -264,7 +244,7 @@ public final class GameState {
   * etc... for all 54 possible nodes on the board.
   */
   private void populateNodes() {
-    ArrayList<Node> boardNodes = this.game.getBoard().getNodes();
+    List<Node> boardNodes = this.game.getBoard().getNodes();
     for (int i = 0; i < this.nodes.length; i++) {
       if (!boardNodes.get(i).hasBuilding()) {
         this.nodes[i] = new int[] { 0, 0 };
@@ -288,7 +268,7 @@ public final class GameState {
   * etc... for all 9 ports on the board.
   */
   private void populatePorts() {
-    ArrayList<Node> nodes = this.game.getBoard().getNodes();
+    List<Node> nodes = this.game.getBoard().getNodes();
     int[] nodeWithPortIndexes = {
       0, 1, 10, 11, 26, 33, 42, 47, 49
     };
@@ -370,21 +350,31 @@ public final class GameState {
   public int getLastDiceRollValue() {
     return this.lastDiceRollValue;
   }
-  
-  public ResourceCard[] getOrderOfCards() {
-    return this.orderOfCards;
-  }
 
-  public int[][][] toArray() {
-    return new int[][][] {
-      tiles,
-      new int[][] {banks},
-      playerPerspectiveResourceCards,
-      playerFullResourceCards,
-      new int[][] {edges},
-      nodes,
-      new int[][] {ports},
-      playerMetadata
-    };
+  /**
+   * Converts gamestate to a json complient map.
+   *
+   * @return map of gamestate.
+   */
+  public Map<String, int[][]> toMap() {
+    Map<String, int[][]> map = new HashMap<>();
+    map.put("tiles", this.tiles);
+    map.put("banks", new int[][] {banks});
+    map.put("playerPerspectiveResourceCards", this.playerPerspectiveResourceCards);
+    map.put("playerFullResourceCards", this.playerFullResourceCards);
+    map.put("edges", new int[][] {this.edges});
+    map.put("nodes", this.nodes);
+    map.put("ports", new int[][] {this.ports});
+    map.put("playerMetadata", this.playerMetadata);
+    map.put("lastRoll", new int[][] {{this.lastDiceRollValue}});
+    map.put("currentPlayer", new int[][] {{this.game.getCurrentPlayer().getID().getValue()}});
+    map.put("actionID", new int[][] {{this.lastAction}});
+    map.put("finished", new int[][] {{this.game.hasEnded() ? 1 : 0}});
+    map.put(
+        "actionState",
+        new int[][] {{this.game.getActionExecutor().getActionStateMachine().getCurrentActionState().getValue()}}
+    );
+    
+    return map;
   }
 }
