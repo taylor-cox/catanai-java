@@ -14,7 +14,7 @@ class FullyConnectedActorNetwork(nn.Module):
   def __init__(self, n_actions, input_dims: Tuple[int], alpha, chkpt_dir='tmp/ppo') -> None:
     super(FullyConnectedActorNetwork, self).__init__()
 
-    self.checkpoint_file = os.path.join(chkpt_dir, 'actor_torch_ppo')
+    self.checkpoint_file = os.path.join(chkpt_dir, 'actor_torch_ppo.pt')
     '''MODEL 1'''
     self.network_to_use = nn.Sequential(
       nn.Linear(*input_dims, 2048),
@@ -82,7 +82,7 @@ class FullyConnectedActorNetwork(nn.Module):
 class FullyConnectedCriticNetwork(nn.Module):
   def __init__(self, input_dims: Tuple[int], alpha, chkpt_dir='tmp/ppo'):
     super(FullyConnectedCriticNetwork, self).__init__()
-    self.checkpoint_file = os.path.join(chkpt_dir, 'actor_torch_ppo')
+    self.checkpoint_file = os.path.join(chkpt_dir, 'critic_fullyconnected_ppo.pt')
     '''MODEL 1'''
     self.network_to_use = nn.Sequential(
       nn.Linear(*input_dims, 2048),
@@ -155,6 +155,7 @@ class FullyConnectedAgent:
     self.policy_clip: float = policy_clip
     self.n_epochs: int = n_epochs
     self.gae_lambda: float = gae_lambda
+    self.batch_size: int = batch_size
 
     self.actor: FullyConnectedActorNetwork = FullyConnectedActorNetwork(n_actions, input_dims, alpha)
     self.critic: FullyConnectedCriticNetwork = FullyConnectedCriticNetwork(input_dims, alpha)
@@ -244,7 +245,7 @@ class FullyConnectedAgent:
   #   # Release semaphore
   
   def learn(self):
-    # Parallelize.
+    # TODO: Parallelize testing, can remove.
     # toIterateOver = [(self.memory.generate_batches(), pickle.loads(pickle.dumps(self.actor)), pickle.loads(pickle.dumps(self.critic))) for _ in range(self.n_epochs)]
     # self.current_epoch_processing = 0
     # self.semaphore_actor_critic = Semaphore()
@@ -283,7 +284,7 @@ class FullyConnectedAgent:
         states = T.tensor(state_arr[batch], dtype=T.float32).to("cuda:0")
         old_probs = T.tensor(old_probs_arr[batch], dtype=T.float32).to("cuda:0")
         actions = T.tensor(action_arr[batch], dtype=T.float32).to("cuda:0")
-        currentValue = T.Tensor(values[batch]).to("cuda:0")
+        currentValue = T.tensor(values[batch]).to("cuda:0")
 
         dist = self.actor(states)
         critic_value = self.critic(states)
@@ -291,18 +292,16 @@ class FullyConnectedAgent:
         critic_value = T.squeeze(critic_value)
         new_probs = []
 
-        for i in range(self.n_actions):
+        for i in range(self.batch_size):
           new_probs.append([])
           for j in range(self.n_actions):
             new_probs[i].append(dist[j].log_prob(actions[i][j])[0])
             
         new_probs = T.stack([T.stack(new_p) for new_p in new_probs]).to(self.actor.device)
-
         prob_ratio = new_probs.exp() / old_probs.exp()
-        weighted_probs = advantage[batch] * prob_ratio
-        weighted_clipped_probs = T.clamp(prob_ratio, 1-self.policy_clip, 1+self.policy_clip)*advantage[batch]
+        weighted_probs = T.matmul(advantage[batch], prob_ratio)
+        weighted_clipped_probs = T.matmul(advantage[batch], T.clamp(prob_ratio, 1-self.policy_clip, 1+self.policy_clip))
         actor_loss = -T.min(weighted_probs, weighted_clipped_probs).mean()
-
         returns = advantage[batch] + currentValue
 
         critic_loss = (returns-critic_value)**2

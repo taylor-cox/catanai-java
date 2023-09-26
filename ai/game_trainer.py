@@ -7,14 +7,17 @@ from websockets.game_websockets import GameWebSocketHandler
 import torch as T
 from tqdm import tqdm
 import time
+import logging
 
 from typing import List, Tuple
 
+logging.basicConfig(filename='game_trainer.log', encoding='utf-8', level=logging.INFO)
+
 class AgentTrainer:
     def __init__(self):
-        self.N: int = 2035
-        self.batch_size: int = 11
-        self.n_epochs: int = 5
+        self.N: int = 2048
+        self.batch_size: int = 32
+        self.n_epochs: int = 8
         self.alpha: float = 0.0003
         self.best_score: float = 0.0
         self.score_history: List[float] = []
@@ -39,9 +42,11 @@ class AgentTrainer:
         self.player_id = '1'
     
     def save_models(self):
+        logging.info('Saving models.')
         self.agent.save_models()
     
     def load_models(self):
+        logging.info('Loading models.')
         self.agent.load_models()
 
 class GameTrainer:
@@ -66,22 +71,32 @@ class GameTrainer:
         self._run_training_loop()
 
     def _run_training_loop(self):
-        largest_game_id: int = self.game_state_dao.getLargestGameID()
-        for i in range(largest_game_id if largest_game_id != -1 else 0, self.N_GAMES if not self.profiling else 1):
-            time_start = time.perf_counter()
-            print(f'-------------------------- Episode: {i} --------------------------')
-            self.current_game_number = i
-            # Open the websocket connection.
-            with self.game_websocket_handler as game_websocket_handler:
-                # Create new game, and get the observation of the current game state.
-                self._run_game_loop(game_websocket_handler)
-            # After the game is over, reset the agent trainer and other vars per game.
-            time_end = time.perf_counter()
-            print(f'Average reward over full game: {sum(self.agent_trainer.score_history) / len(self.agent_trainer.score_history)}')
-            print(f'Best reward this episode: {max(self.agent_trainer.score_history)}')
-            print(f'Episode length (time): {(time_start - time_end) // 60}:{(time_start - time_end) % 60}')
-            self.agent_trainer.reset()
-            self.n_turns = 0
+        try:
+            largest_game_id: int = self.game_state_dao.getLargestGameID()
+            for i in range(largest_game_id + 1 if largest_game_id != -1 else 0, self.N_GAMES if not self.profiling else 1):
+                logging.info(f'-------------------------- Episode: {i} --------------------------')
+                time_start = time.perf_counter()
+                print(f'-------------------------- Episode: {i} --------------------------')
+                self.current_game_number = i
+                # Open the websocket connection.
+                with self.game_websocket_handler as game_websocket_handler:
+                    # Create new game, and get the observation of the current game state.
+                    self._run_game_loop(game_websocket_handler)
+                # After the game is over, reset the agent trainer and other vars per game.
+                time_end = time.perf_counter()
+                print(f'Average reward over full game: {sum(self.agent_trainer.score_history) / len(self.agent_trainer.score_history)}')
+                print(f'Best reward this episode: {max(self.agent_trainer.score_history)}')
+                print(f'Episode length (time): {(time_start - time_end) // 60}:{(time_start - time_end) % 60}')
+                logging.info(f'Average reward over full game: {sum(self.agent_trainer.score_history) / len(self.agent_trainer.score_history)}')
+                logging.info(f'Best reward this episode: {max(self.agent_trainer.score_history)}')
+                logging.info(f'Episode length (time): {(time_start - time_end) // 60}:{(time_start - time_end) % 60}')
+                self.agent_trainer.reset()
+                self.n_turns = 0
+        except:
+            print('ERROR OCCURRED: Waiting for 10 seconds to restart training.')
+            logging.error(f"ERROR OCCURRED at epoch number {self.game_state_dao.getLargestGameID()}: Waiting for 10 seconds to restart training.")
+            time.sleep(10)
+            self._run_training_loop()
 
     def _run_game_loop(self, game_websocket_handler: GameWebSocketHandler):
         observation: np.ndarray = self._new_game(game_websocket_handler)
@@ -89,7 +104,7 @@ class GameTrainer:
         num_actions_until_success: int = 0
         previous_game_state: GameState | None = None
 
-        for _ in range(50000 if not self.profiling else 500):
+        for _ in tqdm(range(50000 if not self.profiling else 500)):
             if done or self.n_turns >= self.MAX_TURNS:
                 break
             # Have agent choose an action with probs and val.
@@ -228,6 +243,6 @@ class GameTrainer:
         if done:
             reward += 100.0
         
-        reward -= failed_actions * 0.5
+        reward -= failed_actions * 0.1
 
         return reward
