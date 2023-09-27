@@ -18,7 +18,6 @@ public class GameStatesDAO {
   @Autowired
   JdbcTemplate jdbcTemplate;
 
-
   class ColumnRawMapper extends ColumnMapRowMapper {
     @Override
     protected Object getColumnValue(ResultSet rs, int index) throws SQLException {
@@ -29,7 +28,6 @@ public class GameStatesDAO {
       return super.getColumnValue(rs, index);
     }
   }
-
 
   /**
    * Get all gamestates of the given gameId from the database.

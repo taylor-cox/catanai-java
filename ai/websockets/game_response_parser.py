@@ -66,4 +66,7 @@ class GameResponseParser:
       for val2 in val:
         arr.append(val2)
     
+    for val in self.game_state.playerDevelopmentCards[int(self.game_state.currentPlayer[0][0]) - 1]:
+      arr.append(val)
+    
     return np.array(arr)

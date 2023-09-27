@@ -16,3 +16,4 @@ class GameState(object):
   actionState: List[List[int]]
   successful: List[List[int]]
   playerMetadata: List[List[int]]
+  playerDevelopmentCards: List[List[int]]

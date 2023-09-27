@@ -33,7 +33,7 @@ class AgentTrainer:
             batch_size=self.batch_size,
             alpha=self.alpha,
             n_epochs=self.n_epochs,
-            input_dims=(281,)
+            input_dims=(286,)
         )
         self.load_models()
 
@@ -86,16 +86,18 @@ class GameTrainer:
                 time_end = time.perf_counter()
                 print(f'Average reward over full game: {sum(self.agent_trainer.score_history) / len(self.agent_trainer.score_history)}')
                 print(f'Best reward this episode: {max(self.agent_trainer.score_history)}')
-                print(f'Episode length (time): {(time_start - time_end) // 60}:{(time_start - time_end) % 60}')
+                print(f'Episode length (time): {((time_end - time_start) // 60) // 60}:{((time_end - time_start) // 60) % 60}:{(time_start - time_end) % 60}')
                 logging.info(f'Average reward over full game: {sum(self.agent_trainer.score_history) / len(self.agent_trainer.score_history)}')
                 logging.info(f'Best reward this episode: {max(self.agent_trainer.score_history)}')
-                logging.info(f'Episode length (time): {(time_start - time_end) // 60}:{(time_start - time_end) % 60}')
+                logging.info(f'Episode length (time): {((time_end - time_start) // 60) // 60}:{((time_end - time_start) // 60) % 60}:{(time_start - time_end) % 60}')
                 self.agent_trainer.reset()
                 self.n_turns = 0
-        except:
+        except Exception as e:
+            print(e)
             print('ERROR OCCURRED: Waiting for 10 seconds to restart training.')
             logging.error(f"ERROR OCCURRED at epoch number {self.game_state_dao.getLargestGameID()}: Waiting for 10 seconds to restart training.")
             time.sleep(10)
+            self.agent_trainer.reset()
             self._run_training_loop()
 
     def _run_game_loop(self, game_websocket_handler: GameWebSocketHandler):
@@ -133,7 +135,7 @@ class GameTrainer:
                 # print(f'Player {self.agent_trainer.player_id} successfully played move after {num_actions_until_success} failed actions.')
                 # print(action)
                 if not self.profiling:
-                    self.game_state_dao.addGamestate(self.game_response_parser.getGameStateMessage(), self.current_game_number, num_actions_until_success, reward)
+                    self.game_state_dao.addGamestate(self.game_response_parser.getGameStateMessage(), self.current_game_number, num_actions_until_success, reward, action[1:])
                 num_actions_until_success = 0
             else:
                 num_actions_until_success += 1
@@ -157,7 +159,7 @@ class GameTrainer:
         game_state_str: str = game_websocket_handler.newGame()
         self.game_response_parser.setMessage(game_state_str)
         if not self.profiling:
-            self.game_state_dao.addGamestate(game_state_str, self.current_game_number, 0, 0)
+            self.game_state_dao.addGamestate(game_state_str, self.current_game_number, 0, 0, [0] * 10)
         return self.game_response_parser.getGameStateAsObservation()
 
     def _make_move(
