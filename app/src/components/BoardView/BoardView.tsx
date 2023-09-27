@@ -1,9 +1,10 @@
 import React, {useState, useEffect, useRef} from 'react';
-import './Board.css';
+import './BoardView.css';
 import { catanapi } from '../../apis/CatanAIAPI';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { Button, Input, Space } from 'antd';
-import Player from '../Player/Player';
+import Player from './Player/Player';
+import GameMetadata from './GameMetadata/GameMetadata';
 
 const CANVAS_WIDTH = 850;
 const CANVAS_HEIGHT = 850;
@@ -41,7 +42,7 @@ const TILE_COLORS: string[] = [
   "#c9280c"
 ]
 
-function Board() {
+const Board: React.FC = () => {
   const [board, setBoard] = useState<catanapi.IBoard>();
   const canvasRef = useRef(null);
 
@@ -65,10 +66,11 @@ function Board() {
           <Input placeholder='Enter a game ID (0, 1, ...)' />
           <Button type='primary'>Submit</Button>
         </Space.Compact>
-        <Player playerColor={PLAYER_COLORS['P1']} />
-        <Player playerColor={PLAYER_COLORS['P2']} />
-        <Player playerColor={PLAYER_COLORS['P3']} />
-        <Player playerColor={PLAYER_COLORS['P4']} />
+        <GameMetadata />
+        <Player playerID={'P1'} currentTurn={true} />
+        <Player playerID={'P2'} currentTurn={false} />
+        <Player playerID={'P3'} currentTurn={false} />
+        <Player playerID={'P4'} currentTurn={false} />
       </div>
       <div id="board-and-scroll">
         <canvas id="board" ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} />
@@ -220,3 +222,4 @@ function drawBoard(board: catanapi.IBoard | undefined, canvasRef: React.MutableR
 }
 
 export default Board;
+export const playerColors: any = PLAYER_COLORS;
