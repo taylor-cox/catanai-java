@@ -22,16 +22,35 @@ export namespace catanapi {
     actionState?: number[][],
   };
 
+  export interface IGameState {
+    id: number,
+    game_id: number,
+    nodes: number[][],
+    edges: number[],
+    tiles: number[][],
+    banks: number[],
+    playerMetadata: number[][],
+    playerFullResourceCards: number[][],
+    playerPerspectiveResourceCards: number[][],
+    playerDevelopmentCards: number[][],
+    ports: number[],
+    lastRoll: number,
+    currentPlayer: number,
+    actionID: number,
+    numAttemptedActionsBeforeSuccessful: number,
+    reward: number,
+  }
+
   // TODO: Remove testing function
   export function getRandomBoard(): Promise<AxiosResponse<IBoard, any>> {
     return axios.get<IBoard>(`${API_NETWORK_LOCATION}/randomGame`, { method: 'GET', headers: {"Accept": 'application/json'}});
   }
 
-  export function getNodeEdgeMappings(): Promise<AxiosResponse> {
+  export function getNodeEdgeMappings(): Promise<AxiosResponse<String, any>> {
     return axios.get(`${API_NETWORK_LOCATION}/nodeEdgeMappings`);
   }
 
-  export function getGameByID(gameID: string): Promise<AxiosResponse> {
-    return axios.get(`${API_NETWORK_LOCATION}/game?gameId=${gameID}`);
+  export function getGameByID(gameID: number): Promise<AxiosResponse<IGameState[], any>> {
+    return axios.get<IGameState[]>(`${API_NETWORK_LOCATION}/game?gameId=${gameID}`);
   }
 };

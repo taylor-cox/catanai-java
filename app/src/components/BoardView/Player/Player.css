@@ -55,7 +55,8 @@
 
 #player-vp, #player-settlements, #player-cities, #player-roads,
 #player-brick, #player-wood, #player-sheep, #player-wheat, #player-ore,
-#player-robbers-played, #player-longest-road, #player-largest-army, #player-last-action {
+#player-robbers-played, #player-longest-road, #player-largest-army, #player-last-action,
+#player-knight-dev, #player-vp-dev, #player-road-building-dev, #player-yop-dev, #player-monopoly-dev {
   display: flex;
   align-items: center;
   margin-right: 0.5rem;
