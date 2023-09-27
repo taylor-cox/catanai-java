@@ -1,20 +1,23 @@
 #player-information {
   display: flex;
   flex-direction: row;
-  margin-top: 5%;
+  margin-top: 1rem;
+  max-height: 17%;
 }
 
 #player-current-state {
   display: flex;
   flex-direction: row;
   border-radius: 100%;
+  width: 100%;
+  justify-content: space-evenly;
 }
 
 #player-icon {
   display: flex;
   align-items: center;
-  margin-right: 0.5rem;
   margin-left: 0.5rem;
+  flex-grow: 2;
 }
 
 #star-png {
@@ -41,18 +44,26 @@
   filter: invert(40%) sepia(15%) saturate(418%) hue-rotate(179deg) brightness(99%) contrast(93%);
 }
 
-#player-victory-points-buildings, #player-resources {
+#player-victory-points-buildings, #player-resources, #player-other-metadata {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  /* justify-content: center; */
   margin-right: 0.5rem;
+  height: 100%;
+  align-items: center;
 }
 
 #player-vp, #player-settlements, #player-cities, #player-roads,
-#player-brick, #player-wood, #player-sheep, #player-wheat, #player-ore {
+#player-brick, #player-wood, #player-sheep, #player-wheat, #player-ore,
+#player-robbers-played, #player-longest-road, #player-largest-army, #player-last-action {
   display: flex;
   align-items: center;
   margin-right: 0.5rem;
   height: 2rem;
   width: 100%;
+  justify-content: center;
+}
+
+p {
+  font-size: 13px;
 }
