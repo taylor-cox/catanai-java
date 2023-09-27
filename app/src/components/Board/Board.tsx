@@ -1,10 +1,13 @@
 import React, {useState, useEffect, useRef} from 'react';
 import './Board.css';
 import { catanapi } from '../../apis/CatanAIAPI';
+import { LeftOutlined, RightOutlined } from '@ant-design/icons';
+import { Button, Input, Space } from 'antd';
+import Player from '../Player/Player';
 
-interface BoardProps {
-  tiles: number[],
-}
+const CANVAS_WIDTH = 850;
+const CANVAS_HEIGHT = 850;
+const BOARD_SIZE = 70;
 
 interface Tile {
   x: number,
@@ -17,12 +20,10 @@ interface Node {
 };
 
 interface Edge {
-  index: number
+  node1: number,
+  node2: number
 };
 
-const CANVAS_WIDTH = 850;
-const CANVAS_HEIGHT = 850;
-const BOARD_SIZE = 70;
 
 const PLAYER_COLORS = {
   P1: "#ff0000",
@@ -44,22 +45,39 @@ function Board() {
   const [board, setBoard] = useState<catanapi.IBoard>();
   const canvasRef = useRef(null);
 
+  var nodes;
+
   useEffect(() => {
     catanapi.getRandomBoard()
     .then((resp) => {
       setBoard(resp.data);
     });
-
   }, []);
 
   useEffect(() => {
-    let nodes = drawBoard(board, canvasRef);
+    nodes = drawBoard(board, canvasRef);
   }, [board]);
 
   return (
     <div id="board-container">
-      <canvas id="board" ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} />
-      {/* <p>{JSON.stringify(board)}</p> */}
+      <div id="input-and-players-col">
+        <Space.Compact style={{ width: '100%' }}>
+          <Input placeholder='Enter a game ID (0, 1, ...)' />
+          <Button type='primary'>Submit</Button>
+        </Space.Compact>
+        <Player playerColor={PLAYER_COLORS['P1']} />
+        <Player playerColor={PLAYER_COLORS['P2']} />
+        <Player playerColor={PLAYER_COLORS['P3']} />
+        <Player playerColor={PLAYER_COLORS['P4']} />
+      </div>
+      <div id="board-and-scroll">
+        <canvas id="board" ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} />
+        <div id="scroll-turns">
+          <Button shape="circle" icon={<LeftOutlined />} size="large"/>
+          <div id="button-seperator" />
+          <Button shape="circle" icon={<RightOutlined />} size="large"/>
+        </div>
+      </div>
     </div>
   );
 }

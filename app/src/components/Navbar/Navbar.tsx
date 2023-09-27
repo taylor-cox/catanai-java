@@ -1,8 +1,10 @@
 import React from 'react';
 import './Navbar.css';
 import type { MenuProps } from 'antd';
-import { AppstoreOutlined, HomeOutlined, MailOutlined, SettingOutlined } from '@ant-design/icons';
+import { DatabaseOutlined, HomeOutlined, LineChartOutlined, SettingOutlined } from '@ant-design/icons';
 import { Menu } from 'antd';
+import { changePage } from '../../features/pageSlice';
+import { useDispatch } from 'react-redux';
 
 type MenuItem = Required<MenuProps>['items'][number];
 
@@ -23,26 +25,27 @@ function getItem(
 }
 
 const items: MenuProps['items'] = [
-  getItem('Home', 'sub1', <HomeOutlined />),
-
-  getItem('Navigation Two', 'sub2', <AppstoreOutlined />),
-
-  { type: 'divider' },
-
-  getItem('Navigation Three', 'sub4', <SettingOutlined />),
-
-  getItem('Group', 'grp', null, [getItem('Option 13', '13'), getItem('Option 14', '14')], 'group'),
+  getItem('Home', 'home', <HomeOutlined />),
+  getItem('Statistics', 'statistics', <LineChartOutlined />),
+  getItem('Database', 'database', <DatabaseOutlined />),
+  getItem('Settings', 'settings', <SettingOutlined />),
 ];
 
 const Navbar: React.FC = () => {
+  // For page changing.
+  const dispatch = useDispatch();
+
   const onClick: MenuProps['onClick'] = (e) => {
-    console.log('click ', e);
+    console.log("Clicked: " + e.key)
+    if (!e.key) return;
+    if (e.key === 'home') dispatch(changePage(''));
+    else dispatch(changePage(e.key));
   };
 
   return (
     <Menu
       onClick={onClick}
-      style={{ width: 256 }}
+      style={{ width: 350 }}
       defaultSelectedKeys={['1']}
       defaultOpenKeys={['sub1']}
       mode="inline"

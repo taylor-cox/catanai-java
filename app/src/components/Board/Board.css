@@ -1,12 +1,33 @@
-#board-container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-}
-
 #board {
   padding-top: 1em;
-  padding-bottom: 5em;
+  padding-bottom: 0.5em;
+}
+
+#scroll-turns {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  justify-content: space-evenly;
+}
+
+#button-seperator {
+  width: 30em;
+}
+
+#board-container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+#input-and-players-col {
+  width: 40%;
+  margin-top: 1em;
+  margin-left: 1em;
+}
+
+#board-and-scroll {
+  margin-right: 1em;
 }
