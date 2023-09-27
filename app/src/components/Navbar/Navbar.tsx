@@ -45,7 +45,7 @@ const Navbar: React.FC = () => {
   return (
     <Menu
       onClick={onClick}
-      style={{ width: 350 }}
+      style={{ width: 200 }}
       defaultSelectedKeys={['1']}
       defaultOpenKeys={['sub1']}
       mode="inline"
