@@ -1,0 +1,25 @@
+#game-metadata-container {
+  margin-top: 5%;
+  border: 1px solid black;
+  width: 100%;
+  border-radius: .5em;
+}
+
+p, h5 {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+#title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-top: 1rem;
+  margin-left: 1rem;
+}
+
+.row {
+  display: flex;
+  direction: row;
+  justify-content: space-evenly;
+  margin-bottom: 0.6rem;
+}
