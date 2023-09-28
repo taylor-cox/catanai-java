@@ -1,3 +1,4 @@
+from typing import List
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine import URL
@@ -20,7 +21,7 @@ class GameStateDAO:
     self.Session = sessionmaker(bind=self.engine)
     self.s = self.Session()
   
-  def addGamestate(self, gamestate: str, game_id: int, numActionsUntilSuccessful: int, reward: float):
+  def addGamestate(self, gamestate: str, game_id: int, numActionsUntilSuccessful: int, reward: float, action: List[int]):
     self.recreate_session()
     gamestateDict = json.loads(gamestate)
     gamestateToAdd = GameState(
@@ -32,12 +33,14 @@ class GameStateDAO:
       edges = gamestateDict['edges'][0],
       playerFullResourceCards = gamestateDict['playerFullResourceCards'],
       playerPerspectiveResourceCards = gamestateDict['playerPerspectiveResourceCards'],
+      playerDevelopmentCards = gamestateDict['playerDevelopmentCards'],
       ports = gamestateDict['ports'][0],
       lastRoll = gamestateDict['lastRoll'][0][0],
       currentPlayer = gamestateDict['currentPlayer'][0][0],
       actionID = gamestateDict['actionID'][0][0],
       numAttemptedActionsBeforeSuccessful = numActionsUntilSuccessful,
-      reward = reward
+      reward = reward,
+      actionMetadata = action
     )
     self.s.add(gamestateToAdd)
     self.s.commit()

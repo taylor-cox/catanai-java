@@ -1,5 +1,8 @@
 package com.catanai.server.model.bank.card;
 
+import java.util.Arrays;
+import java.util.Optional;
+
 /**
 * Represents a development card.
 */
@@ -18,5 +21,16 @@ public enum DevelopmentCard implements Card {
   
   public int getValue() {
     return this.value;
+  }
+
+  public static DevelopmentCard valueOf(int value) {
+    if (value < 0 || value > 4) {
+      return null;
+    }
+    Optional<DevelopmentCard> rc = Arrays.stream(values())
+            .filter(resource -> resource.value == value)
+            .findFirst();
+    
+    return rc.orElse(null);
   }
 }

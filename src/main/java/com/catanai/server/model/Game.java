@@ -218,6 +218,7 @@ public final class Game {
     int dice2Value = rand.nextInt(high - low) + low;
     this.lastDiceRollValue = dice1Value + dice2Value;
     this.updateGamestate();
+    this.produce(dice1Value + dice2Value);
     return dice1Value + dice2Value;
   }
 

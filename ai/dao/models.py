@@ -15,12 +15,14 @@ class GameState(Base):
     edges = Column(ARRAY(SmallInteger))
     playerFullResourceCards = Column(ARRAY(SmallInteger))
     playerPerspectiveResourceCards = Column(ARRAY(SmallInteger))
+    playerDevelopmentCards = Column(ARRAY(SmallInteger))
     ports = Column(ARRAY(SmallInteger))
     lastRoll = Column(SmallInteger)
     currentPlayer = Column(SmallInteger)
     actionID = Column(SmallInteger)
     numAttemptedActionsBeforeSuccessful = Column(BigInteger)
     reward = Column(Float)
+    actionMetadata = Column(ARRAY(SmallInteger))
 
     def __repr__(self):
         return f"<GameState(id='{self.id})>"

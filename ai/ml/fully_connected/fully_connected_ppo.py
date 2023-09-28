@@ -4,26 +4,28 @@ import numpy as np
 import torch as T
 import torch.nn as nn
 import torch.optim as optim
+from torch.cuda.amp import autocast, GradScaler
 from torch.distributions.categorical import Categorical
+from torch.autograd import Variable
 from torch.types import Number
 from tqdm import tqdm
 from ml.ppo_memory import PPOMemory
 # from numba import njit, jit, prange
 
+
 class FullyConnectedActorNetwork(nn.Module):
   def __init__(self, n_actions, input_dims: Tuple[int], alpha, chkpt_dir='tmp/ppo') -> None:
     super(FullyConnectedActorNetwork, self).__init__()
-
-    self.checkpoint_file = os.path.join(chkpt_dir, 'actor_torch_ppo')
+    self.chkpt_dir = chkpt_dir
     '''MODEL 1'''
     self.network_to_use = nn.Sequential(
-      nn.Linear(*input_dims, 2048),
+      nn.Linear(*input_dims, 600),
       nn.ReLU(),
-      nn.Linear(2048, 1024),
+      nn.Linear(600, 600),
       nn.ReLU(),
-      nn.Linear(1024, 512),
+      nn.Linear(600, 300),
       nn.ReLU(),
-      nn.Linear(512, 256),
+      nn.Linear(300, 256),
       nn.ReLU(),
       # nn.Softmax(dim=-1)
     ).to("cuda:0")
@@ -55,10 +57,12 @@ class FullyConnectedActorNetwork(nn.Module):
       ]
     )
 
-    self.optimizer = optim.Adam(self.parameters(), lr=alpha)
+    self.optimizer = optim.SGD(self.parameters(), lr=alpha, momentum=0.9)
+    self.scheduler = T.optim.lr_scheduler.CyclicLR(self.optimizer, base_lr=0.01, max_lr=0.1)
     self.device = T.device("cuda:0" if T.cuda.is_available() else 'cpu')
     self.to(self.device)
 
+  # @autocast()
   def forward(self, state):
     # encoder_outputs = self.encoder(state)
     # decoder_outputs = self.decoder(encoder_outputs, state)
@@ -70,34 +74,32 @@ class FullyConnectedActorNetwork(nn.Module):
     # print(logits)
     return policy_outputs
   
-  def save_checkpoint(self):
-    T.save(self.state_dict(), self.checkpoint_file)
+  def save_checkpoint(self, player_id: str):
+    checkpoint_file = os.path.join(self.chkpt_dir, f'actor_torch_ppo_{player_id}.pt')
+    T.save(self.state_dict(), checkpoint_file)
 
-  def load_checkpoint(self):
+  def load_checkpoint(self, player_id: str):
     try:
-      self.load_state_dict(T.load(self.checkpoint_file))
+      checkpoint_file = os.path.join(self.chkpt_dir, f'actor_torch_ppo_{player_id}.pt')
+      self.load_state_dict(T.load(checkpoint_file))
     except:
       print("No checkpoint found. Creating new model...")
   
 class FullyConnectedCriticNetwork(nn.Module):
   def __init__(self, input_dims: Tuple[int], alpha, chkpt_dir='tmp/ppo'):
     super(FullyConnectedCriticNetwork, self).__init__()
-    self.checkpoint_file = os.path.join(chkpt_dir, 'actor_torch_ppo')
+    self.chkpt_dir = chkpt_dir
     '''MODEL 1'''
     self.network_to_use = nn.Sequential(
-      nn.Linear(*input_dims, 2048),
+      nn.Linear(*input_dims, 600),
       nn.ReLU(),
-      nn.Linear(2048, 1024),
+      nn.Linear(600, 600),
       nn.ReLU(),
-      nn.Linear(1024, 512),
+      nn.Linear(600, 300),
       nn.ReLU(),
-      nn.Linear(512, 256),
+      nn.Linear(300, 256),
       nn.ReLU(),
-      nn.Linear(256, 128),
-      nn.ReLU(),
-      nn.Linear(128, 64),
-      nn.ReLU(),
-      nn.Linear(64, 1),
+      nn.Linear(256, 1),
       nn.ReLU(),
       # nn.Softmax(dim=-1)
     ).to("cuda:0")
@@ -114,10 +116,12 @@ class FullyConnectedCriticNetwork(nn.Module):
     # self.linear = nn.Linear(*input_dims, 11).to("cuda:0")
     # self.sigmoid = nn.Sigmoid().to("cuda:0")
 
-    self.optimizer = optim.Adam(self.parameters(), lr=alpha)
+    self.optimizer = optim.SGD(self.parameters(), lr=alpha, momentum=0.9)
+    self.scheduler = T.optim.lr_scheduler.CyclicLR(self.optimizer, base_lr=0.01, max_lr=0.1)
     self.device = T.device("cuda:0" if T.cuda.is_available() else 'cpu')
     self.to(self.device)
   
+  # @autocast()
   def forward(self, state):
     # encoder_outputs = self.encoder(state)
     # decoder_outputs = self.decoder(encoder_outputs, state)
@@ -125,11 +129,13 @@ class FullyConnectedCriticNetwork(nn.Module):
     logits = self.network_to_use(state)
     return logits
   
-  def save_checkpoint(self):
-    T.save(self.state_dict(), self.checkpoint_file)
+  def save_checkpoint(self, player_id: str):
+    checkpoint_file = os.path.join(self.chkpt_dir, f'critic_torch_ppo_{player_id}.pt')
+    T.save(self.state_dict(), checkpoint_file)
 
-  def load_checkpoint(self):
+  def load_checkpoint(self, player_id: str):
     try:
+      self.checkpoint_file = os.path.join(self.chkpt_dir, f'critic_torch_ppo_{player_id}.pt')
       self.load_state_dict(T.load(self.checkpoint_file))
     except:
       print("No checkpoint found (critic). Creating new model...")
@@ -155,6 +161,7 @@ class FullyConnectedAgent:
     self.policy_clip: float = policy_clip
     self.n_epochs: int = n_epochs
     self.gae_lambda: float = gae_lambda
+    self.batch_size: int = batch_size
 
     self.actor: FullyConnectedActorNetwork = FullyConnectedActorNetwork(n_actions, input_dims, alpha)
     self.critic: FullyConnectedCriticNetwork = FullyConnectedCriticNetwork(input_dims, alpha)
@@ -163,15 +170,14 @@ class FullyConnectedAgent:
   def remember(self, state, action, probs, vals, reward, done):
     self.memory.store_memory(state, action, probs, vals, reward, done)
   
-  def save_models(self):
-    print('Saving models......')
-    self.actor.save_checkpoint()
-    self.critic.save_checkpoint()
+  def save_models(self, player_id: str):
+    self.actor.save_checkpoint(player_id)
+    self.critic.save_checkpoint(player_id)
   
-  def load_models(self):
+  def load_models(self, player_id: str):
     print("Loading models.......")
-    self.actor.load_checkpoint()
-    self.critic.load_checkpoint()
+    self.actor.load_checkpoint(player_id)
+    self.critic.load_checkpoint(player_id)
   
   def choose_action(self, observation) -> Tuple[T.Tensor, T.Tensor, T.Tensor]:
     state = T.tensor(np.array(observation), dtype=T.float).to(self.actor.device)
@@ -244,7 +250,7 @@ class FullyConnectedAgent:
   #   # Release semaphore
   
   def learn(self):
-    # Parallelize.
+    # TODO: Parallelize testing, can remove.
     # toIterateOver = [(self.memory.generate_batches(), pickle.loads(pickle.dumps(self.actor)), pickle.loads(pickle.dumps(self.critic))) for _ in range(self.n_epochs)]
     # self.current_epoch_processing = 0
     # self.semaphore_actor_critic = Semaphore()
@@ -279,11 +285,11 @@ class FullyConnectedAgent:
         advantage[t] = a_t
       advantage = T.tensor(advantage, device=self.actor.device)
 
-      for batch in batches:
-        states = T.tensor(state_arr[batch], dtype=T.float32).to("cuda:0")
-        old_probs = T.tensor(old_probs_arr[batch], dtype=T.float32).to("cuda:0")
-        actions = T.tensor(action_arr[batch], dtype=T.float32).to("cuda:0")
-        currentValue = T.Tensor(values[batch]).to("cuda:0")
+      for i, batch in enumerate(batches):
+        states = T.tensor(state_arr[batch], dtype=T.float32, device=self.actor.device)
+        old_probs = T.tensor(old_probs_arr[batch], dtype=T.float32, device=self.actor.device)
+        actions = T.tensor(action_arr[batch], dtype=T.float32, device=self.actor.device)
+        newVal = T.tensor(values[batch], device=self.actor.device)
 
         dist = self.actor(states)
         critic_value = self.critic(states)
@@ -291,28 +297,28 @@ class FullyConnectedAgent:
         critic_value = T.squeeze(critic_value)
         new_probs = []
 
-        for i in range(self.n_actions):
+        for i in range(self.batch_size):
           new_probs.append([])
           for j in range(self.n_actions):
             new_probs[i].append(dist[j].log_prob(actions[i][j])[0])
             
         new_probs = T.stack([T.stack(new_p) for new_p in new_probs]).to(self.actor.device)
-
         prob_ratio = new_probs.exp() / old_probs.exp()
-        weighted_probs = advantage[batch] * prob_ratio
-        weighted_clipped_probs = T.clamp(prob_ratio, 1-self.policy_clip, 1+self.policy_clip)*advantage[batch]
+        weighted_probs = T.matmul(advantage[batch], prob_ratio)
+        weighted_clipped_probs = T.matmul(advantage[batch], T.clamp(prob_ratio, 1-self.policy_clip, 1+self.policy_clip))
         actor_loss = -T.min(weighted_probs, weighted_clipped_probs).mean()
-
-        returns = advantage[batch] + currentValue
+        returns = advantage[batch] + newVal
 
         critic_loss = (returns-critic_value)**2
         critic_loss = critic_loss.mean()
 
         total_loss = actor_loss + 0.5*critic_loss
-        self.actor.optimizer.zero_grad()
-        self.critic.optimizer.zero_grad()
+        self.actor.optimizer.zero_grad(set_to_none=True)
+        self.critic.optimizer.zero_grad(set_to_none=True)
         total_loss.backward()
         self.actor.optimizer.step()
         self.critic.optimizer.step()
+        self.actor.scheduler.step()
+        self.critic.scheduler.step()
     
     self.memory.clear_memory()

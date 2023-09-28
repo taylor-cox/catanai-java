@@ -2,6 +2,7 @@ package com.catanai.server.model.gamestate;
 
 import com.catanai.server.model.Game;
 import com.catanai.server.model.bank.ResourceBank;
+import com.catanai.server.model.bank.card.DevelopmentCard;
 import com.catanai.server.model.bank.card.ResourceCard;
 import com.catanai.server.model.board.building.Building;
 import com.catanai.server.model.board.building.Settlement;
@@ -44,6 +45,11 @@ public final class GameState {
   * Contains a list of all players resource cards in hand.
   */
   private int[][] playerFullResourceCards;
+
+  /**
+   * Contains a list of all players development cards in hand.
+   */
+  private int[][] playerDevelopmentCards;
   
   /** Contains information about road placement on each edge. */
   private int[] edges;
@@ -81,6 +87,7 @@ public final class GameState {
     this.banks = new int[6];
     this.playerPerspectiveResourceCards = new int[4][5];
     this.playerFullResourceCards = new int[4][5];
+    this.playerDevelopmentCards = new int[4][5];
     this.edges = new int[72];
     this.nodes = new int[54][2];
     this.ports = new int[9];
@@ -93,6 +100,7 @@ public final class GameState {
     this.populateBanks();
     this.populatePlayerPerspectiveResourceCards();
     this.populatePlayerFullResourceCards();
+    this.populatePlayerDevelopmentCards();
     this.populateEdges();
     this.populateNodes();
     this.populatePorts();
@@ -130,16 +138,10 @@ public final class GameState {
   */
   private void populateBanks() {
     Map<ResourceCard, ResourceBank> banks = this.game.getDealer().getResourceBanks();
-    ResourceCard[] orderOfBanks = {
-      ResourceCard.WOOL,
-      ResourceCard.GRAIN,
-      ResourceCard.LUMBER,
-      ResourceCard.ORE,
-      ResourceCard.BRICK,
-    };
+
     // Add resource bank sizes.
-    for (int i = 0; i < orderOfBanks.length; i++) {
-      ResourceCard curCard = orderOfBanks[i];
+    for (int i = 0; i < 5; i++) {
+      ResourceCard curCard = ResourceCard.valueOf(i);
       ResourceBank curBank = banks.get(curCard);
       this.banks[i] = curBank.getCurrentBankSize();
     }
@@ -206,6 +208,30 @@ public final class GameState {
       playerFullResourceCards[i] = new int[5];
       for (int j = 0; j < playerFullResourceCards[i].length; j++) {
         playerFullResourceCards[i][j] = toAddToPlayerResourceCards.get(j);
+      }
+    }
+  }
+
+  /**
+   * Populates player's development cards with the amount of each dev card the
+   * player has in their hand.
+   */
+  private void populatePlayerDevelopmentCards() {
+    for (int i = 0; i < this.game.getPlayers().size(); i++) {
+      Player curPlayer = this.game.getPlayers().get(i);
+      Map<DevelopmentCard, Integer> numCards = new HashMap<>();
+      // Add cards to append to playerResourceCards.
+      List<DevelopmentCard> devCards = curPlayer.getDevelopmentCards();
+      for (int j = 0; j < 5; j++) {
+        DevelopmentCard card = DevelopmentCard.valueOf(j);
+        int numOfThisDevCard = (int) devCards.stream()
+            .filter(devCard -> devCard.getValue() == card.getValue())
+            .count();
+        numCards.put(card, numOfThisDevCard);
+      }
+      playerDevelopmentCards[i] = new int[5];
+      for (int j = 0; j < playerFullResourceCards[i].length; j++) {
+        playerDevelopmentCards[i][j] = numCards.get(DevelopmentCard.valueOf(j));
       }
     }
   }
@@ -362,6 +388,7 @@ public final class GameState {
     map.put("banks", new int[][] {banks});
     map.put("playerPerspectiveResourceCards", this.playerPerspectiveResourceCards);
     map.put("playerFullResourceCards", this.playerFullResourceCards);
+    map.put("playerDevelopmentCards", this.playerDevelopmentCards);
     map.put("edges", new int[][] {this.edges});
     map.put("nodes", this.nodes);
     map.put("ports", new int[][] {this.ports});
