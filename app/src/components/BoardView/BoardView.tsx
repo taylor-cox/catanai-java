@@ -99,12 +99,12 @@ const PLAYER_COLORS = {
 };
 
 const TILE_COLORS: string[] = [
-  "#CEA24A",
-  "#9FC25C",
-  "#d19302",
-  "#147800",
-  "#616A79",
-  "#c9280c"
+  "#CEA24A", // Desert
+  "#147800", // Wood
+  "#9FC25C", // Sheep
+  "#d19302", // Wheat
+  "#c9280c", // Brick
+  "#616A79", // Stone
 ]
 
 const Board: React.FC = () => {
@@ -153,17 +153,15 @@ const Board: React.FC = () => {
   }, []);
 
   const reduceCurrentGameState = (e: any) => {
-    console.log(currentGameState.value)
     if (currentGameState.value === 0) return;
     dispatch(setCurrentGameState(currentGameState.value - 1));
-    drawBoard(gameStates[currentGameState.value], canvasRef);
+    drawBoard(gameStates[currentGameState.value - 1], canvasRef);
   }
 
   const increaseCurrentGameState = (e: any) => {
-    console.log(currentGameState.value)
     if (currentGameState.value === gameStates.length - 1) return;
     dispatch(setCurrentGameState(currentGameState.value + 1));
-    drawBoard(gameStates[currentGameState.value], canvasRef);
+    drawBoard(gameStates[currentGameState.value + 1], canvasRef);
   }
 
   // useEffect(() => {
@@ -211,7 +209,6 @@ function drawBoard(board: catanapi.IGameState, canvasRef: React.MutableRefObject
     let numHexes = 3;
     for(let i = 0; i < 5; i ++) {
       for(let j = 0; j < numHexes; j++) {
-          // console.log(tiles.length, tiles.length + 1);
           tiles.push(drawHexagon(newX, newY, size, board.tiles![tiles.length]));
           newX += 2 * (size * Math.sin(Math.PI / 3));
       }
@@ -335,7 +332,25 @@ function drawBoard(board: catanapi.IGameState, canvasRef: React.MutableRefObject
     }
   }
 
-  drawCenteredCatanBoard(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, BOARD_SIZE, board);
+  function drawTerrainChits(tiles: Tile[], board: catanapi.IGameState) {
+    tiles.forEach((tile, index) => {
+      console.log(tile);
+      ctx.fillStyle = "#b5b5b5";
+      ctx.beginPath();
+      ctx.moveTo(tile['x'], tile['y']);
+      ctx.arc(tile['x'], tile['y'], 25, 0, 2 * Math.PI);
+      ctx.fill();
+      if (board.tiles[index][1] == 6 || board.tiles[index][1] == 8) {
+        ctx.fillStyle = "#ff0000";
+      } else {
+        ctx.fillStyle = "#000000";
+      }
+      ctx.font = "20px serif";
+      ctx.fillText(board.tiles[index][1], tile['x']-6, tile['y']);
+    })
+  }
+
+  let tiles = drawCenteredCatanBoard(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, BOARD_SIZE, board);
   let nodes = getNodesOfHexagons(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, BOARD_SIZE);
   board!.nodes!.forEach((node, index) => {
     drawSettlement(node, index, nodes[index]);
@@ -351,6 +366,7 @@ function drawBoard(board: catanapi.IGameState, canvasRef: React.MutableRefObject
       }
     });
   });
+  drawTerrainChits(tiles, board);
   drawRoads(edgesToDrawEdgesBetween, nodes, board);
 }
 
