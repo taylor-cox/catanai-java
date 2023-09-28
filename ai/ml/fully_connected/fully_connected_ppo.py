@@ -12,13 +12,11 @@ from tqdm import tqdm
 from ml.ppo_memory import PPOMemory
 # from numba import njit, jit, prange
 
-scaler = T.cuda.amp.GradScaler()
 
 class FullyConnectedActorNetwork(nn.Module):
   def __init__(self, n_actions, input_dims: Tuple[int], alpha, chkpt_dir='tmp/ppo') -> None:
     super(FullyConnectedActorNetwork, self).__init__()
-
-    self.checkpoint_file = os.path.join(chkpt_dir, 'actor_torch_ppo.pt')
+    self.chkpt_dir = chkpt_dir
     '''MODEL 1'''
     self.network_to_use = nn.Sequential(
       nn.Linear(*input_dims, 600),
@@ -76,19 +74,21 @@ class FullyConnectedActorNetwork(nn.Module):
     # print(logits)
     return policy_outputs
   
-  def save_checkpoint(self):
-    T.save(self.state_dict(), self.checkpoint_file)
+  def save_checkpoint(self, player_id: str):
+    checkpoint_file = os.path.join(self.chkpt_dir, f'actor_torch_ppo_{player_id}.pt')
+    T.save(self.state_dict(), checkpoint_file)
 
-  def load_checkpoint(self):
+  def load_checkpoint(self, player_id: str):
     try:
-      self.load_state_dict(T.load(self.checkpoint_file))
+      checkpoint_file = os.path.join(self.chkpt_dir, f'actor_torch_ppo_{player_id}.pt')
+      self.load_state_dict(T.load(checkpoint_file))
     except:
       print("No checkpoint found. Creating new model...")
   
 class FullyConnectedCriticNetwork(nn.Module):
   def __init__(self, input_dims: Tuple[int], alpha, chkpt_dir='tmp/ppo'):
     super(FullyConnectedCriticNetwork, self).__init__()
-    self.checkpoint_file = os.path.join(chkpt_dir, 'critic_fullyconnected_ppo.pt')
+    self.chkpt_dir = chkpt_dir
     '''MODEL 1'''
     self.network_to_use = nn.Sequential(
       nn.Linear(*input_dims, 600),
@@ -129,11 +129,13 @@ class FullyConnectedCriticNetwork(nn.Module):
     logits = self.network_to_use(state)
     return logits
   
-  def save_checkpoint(self):
-    T.save(self.state_dict(), self.checkpoint_file)
+  def save_checkpoint(self, player_id: str):
+    checkpoint_file = os.path.join(self.chkpt_dir, f'critic_torch_ppo_{player_id}.pt')
+    T.save(self.state_dict(), checkpoint_file)
 
-  def load_checkpoint(self):
+  def load_checkpoint(self, player_id: str):
     try:
+      self.checkpoint_file = os.path.join(self.chkpt_dir, f'critic_torch_ppo_{player_id}.pt')
       self.load_state_dict(T.load(self.checkpoint_file))
     except:
       print("No checkpoint found (critic). Creating new model...")
@@ -168,15 +170,14 @@ class FullyConnectedAgent:
   def remember(self, state, action, probs, vals, reward, done):
     self.memory.store_memory(state, action, probs, vals, reward, done)
   
-  def save_models(self):
-    print('Saving models......')
-    self.actor.save_checkpoint()
-    self.critic.save_checkpoint()
+  def save_models(self, player_id: str):
+    self.actor.save_checkpoint(player_id)
+    self.critic.save_checkpoint(player_id)
   
-  def load_models(self):
+  def load_models(self, player_id: str):
     print("Loading models.......")
-    self.actor.load_checkpoint()
-    self.critic.load_checkpoint()
+    self.actor.load_checkpoint(player_id)
+    self.critic.load_checkpoint(player_id)
   
   def choose_action(self, observation) -> Tuple[T.Tensor, T.Tensor, T.Tensor]:
     state = T.tensor(np.array(observation), dtype=T.float).to(self.actor.device)
@@ -290,9 +291,8 @@ class FullyConnectedAgent:
         actions = T.tensor(action_arr[batch], dtype=T.float32, device=self.actor.device)
         newVal = T.tensor(values[batch], device=self.actor.device)
 
-        with T.cuda.amp.autocast():
-          dist = self.actor(states)
-          critic_value = self.critic(states)
+        dist = self.actor(states)
+        critic_value = self.critic(states)
 
         critic_value = T.squeeze(critic_value)
         new_probs = []
@@ -315,7 +315,7 @@ class FullyConnectedAgent:
         total_loss = actor_loss + 0.5*critic_loss
         self.actor.optimizer.zero_grad(set_to_none=True)
         self.critic.optimizer.zero_grad(set_to_none=True)
-        scaler.scale(total_loss).backward()
+        total_loss.backward()
         self.actor.optimizer.step()
         self.critic.optimizer.step()
         self.actor.scheduler.step()
