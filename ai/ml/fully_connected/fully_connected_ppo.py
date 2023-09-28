@@ -4,11 +4,15 @@ import numpy as np
 import torch as T
 import torch.nn as nn
 import torch.optim as optim
+from torch.cuda.amp import autocast, GradScaler
 from torch.distributions.categorical import Categorical
+from torch.autograd import Variable
 from torch.types import Number
 from tqdm import tqdm
 from ml.ppo_memory import PPOMemory
 # from numba import njit, jit, prange
+
+scaler = T.cuda.amp.GradScaler()
 
 class FullyConnectedActorNetwork(nn.Module):
   def __init__(self, n_actions, input_dims: Tuple[int], alpha, chkpt_dir='tmp/ppo') -> None:
@@ -17,13 +21,13 @@ class FullyConnectedActorNetwork(nn.Module):
     self.checkpoint_file = os.path.join(chkpt_dir, 'actor_torch_ppo.pt')
     '''MODEL 1'''
     self.network_to_use = nn.Sequential(
-      nn.Linear(*input_dims, 2048),
+      nn.Linear(*input_dims, 600),
       nn.ReLU(),
-      nn.Linear(2048, 1024),
+      nn.Linear(600, 600),
       nn.ReLU(),
-      nn.Linear(1024, 512),
+      nn.Linear(600, 300),
       nn.ReLU(),
-      nn.Linear(512, 256),
+      nn.Linear(300, 256),
       nn.ReLU(),
       # nn.Softmax(dim=-1)
     ).to("cuda:0")
@@ -55,10 +59,12 @@ class FullyConnectedActorNetwork(nn.Module):
       ]
     )
 
-    self.optimizer = optim.Adam(self.parameters(), lr=alpha)
+    self.optimizer = optim.SGD(self.parameters(), lr=alpha, momentum=0.9)
+    self.scheduler = T.optim.lr_scheduler.CyclicLR(self.optimizer, base_lr=0.01, max_lr=0.1)
     self.device = T.device("cuda:0" if T.cuda.is_available() else 'cpu')
     self.to(self.device)
 
+  # @autocast()
   def forward(self, state):
     # encoder_outputs = self.encoder(state)
     # decoder_outputs = self.decoder(encoder_outputs, state)
@@ -85,19 +91,15 @@ class FullyConnectedCriticNetwork(nn.Module):
     self.checkpoint_file = os.path.join(chkpt_dir, 'critic_fullyconnected_ppo.pt')
     '''MODEL 1'''
     self.network_to_use = nn.Sequential(
-      nn.Linear(*input_dims, 2048),
+      nn.Linear(*input_dims, 600),
       nn.ReLU(),
-      nn.Linear(2048, 1024),
+      nn.Linear(600, 600),
       nn.ReLU(),
-      nn.Linear(1024, 512),
+      nn.Linear(600, 300),
       nn.ReLU(),
-      nn.Linear(512, 256),
+      nn.Linear(300, 256),
       nn.ReLU(),
-      nn.Linear(256, 128),
-      nn.ReLU(),
-      nn.Linear(128, 64),
-      nn.ReLU(),
-      nn.Linear(64, 1),
+      nn.Linear(256, 1),
       nn.ReLU(),
       # nn.Softmax(dim=-1)
     ).to("cuda:0")
@@ -114,10 +116,12 @@ class FullyConnectedCriticNetwork(nn.Module):
     # self.linear = nn.Linear(*input_dims, 11).to("cuda:0")
     # self.sigmoid = nn.Sigmoid().to("cuda:0")
 
-    self.optimizer = optim.Adam(self.parameters(), lr=alpha)
+    self.optimizer = optim.SGD(self.parameters(), lr=alpha, momentum=0.9)
+    self.scheduler = T.optim.lr_scheduler.CyclicLR(self.optimizer, base_lr=0.01, max_lr=0.1)
     self.device = T.device("cuda:0" if T.cuda.is_available() else 'cpu')
     self.to(self.device)
   
+  # @autocast()
   def forward(self, state):
     # encoder_outputs = self.encoder(state)
     # decoder_outputs = self.decoder(encoder_outputs, state)
@@ -280,14 +284,15 @@ class FullyConnectedAgent:
         advantage[t] = a_t
       advantage = T.tensor(advantage, device=self.actor.device)
 
-      for batch in batches:
-        states = T.tensor(state_arr[batch], dtype=T.float32).to("cuda:0")
-        old_probs = T.tensor(old_probs_arr[batch], dtype=T.float32).to("cuda:0")
-        actions = T.tensor(action_arr[batch], dtype=T.float32).to("cuda:0")
-        currentValue = T.tensor(values[batch]).to("cuda:0")
+      for i, batch in enumerate(batches):
+        states = T.tensor(state_arr[batch], dtype=T.float32, device=self.actor.device)
+        old_probs = T.tensor(old_probs_arr[batch], dtype=T.float32, device=self.actor.device)
+        actions = T.tensor(action_arr[batch], dtype=T.float32, device=self.actor.device)
+        newVal = T.tensor(values[batch], device=self.actor.device)
 
-        dist = self.actor(states)
-        critic_value = self.critic(states)
+        with T.cuda.amp.autocast():
+          dist = self.actor(states)
+          critic_value = self.critic(states)
 
         critic_value = T.squeeze(critic_value)
         new_probs = []
@@ -302,16 +307,18 @@ class FullyConnectedAgent:
         weighted_probs = T.matmul(advantage[batch], prob_ratio)
         weighted_clipped_probs = T.matmul(advantage[batch], T.clamp(prob_ratio, 1-self.policy_clip, 1+self.policy_clip))
         actor_loss = -T.min(weighted_probs, weighted_clipped_probs).mean()
-        returns = advantage[batch] + currentValue
+        returns = advantage[batch] + newVal
 
         critic_loss = (returns-critic_value)**2
         critic_loss = critic_loss.mean()
 
         total_loss = actor_loss + 0.5*critic_loss
-        self.actor.optimizer.zero_grad()
-        self.critic.optimizer.zero_grad()
-        total_loss.backward()
+        self.actor.optimizer.zero_grad(set_to_none=True)
+        self.critic.optimizer.zero_grad(set_to_none=True)
+        scaler.scale(total_loss).backward()
         self.actor.optimizer.step()
         self.critic.optimizer.step()
+        self.actor.scheduler.step()
+        self.critic.scheduler.step()
     
     self.memory.clear_memory()

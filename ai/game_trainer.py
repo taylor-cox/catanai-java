@@ -15,7 +15,7 @@ logging.basicConfig(filename='game_trainer.log', encoding='utf-8', level=logging
 
 class AgentTrainer:
     def __init__(self):
-        self.N: int = 2048
+        self.N: int = 512
         self.batch_size: int = 32
         self.n_epochs: int = 8
         self.alpha: float = 0.0003
@@ -58,7 +58,7 @@ class GameTrainer:
         # Set up agent trainers.
         self.current_game_number: int = 0
         self.profiling: bool = profiling
-        self.N_GAMES: int = 10_000
+        self.N_GAMES: int = 10_000 if not profiling else 1
         self.agent_trainer = AgentTrainer()
         self.n_turns = 0
         self.MAX_TURNS = 5_000
@@ -73,7 +73,7 @@ class GameTrainer:
     def _run_training_loop(self):
         try:
             largest_game_id: int = self.game_state_dao.getLargestGameID()
-            for i in range(largest_game_id + 1 if largest_game_id != -1 else 0, self.N_GAMES if not self.profiling else 1):
+            for i in range(largest_game_id + 1 if largest_game_id != -1 else 0, self.N_GAMES if not self.profiling else largest_game_id + 2):
                 logging.info(f'-------------------------- Episode: {i} --------------------------')
                 time_start = time.perf_counter()
                 print(f'-------------------------- Episode: {i} --------------------------')
@@ -106,11 +106,12 @@ class GameTrainer:
         num_actions_until_success: int = 0
         previous_game_state: GameState | None = None
 
-        for _ in tqdm(range(50000 if not self.profiling else 500)):
+        for _ in range(10000 if not self.profiling else 1025):
             if done or self.n_turns >= self.MAX_TURNS:
                 break
             # Have agent choose an action with probs and val.
-            action, probs, val = self.agent_trainer.agent.choose_action(observation)
+            with T.no_grad():
+                action, probs, val = self.agent_trainer.agent.choose_action(observation)
             # Convert action to list of ints.
             action = [int(x) for x in action.tolist()]
 
@@ -198,6 +199,7 @@ class GameTrainer:
 
         # If the number of steps is divisible by N, learn.
         if (current_agent.n_steps % current_agent.N) == 0:
+            print('Learning...')
             current_agent.agent.learn()
             current_agent.save_models()
             current_agent.learn_iters += 1
