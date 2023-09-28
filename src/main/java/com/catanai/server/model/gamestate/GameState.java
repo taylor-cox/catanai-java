@@ -229,9 +229,9 @@ public final class GameState {
             .count();
         numCards.put(card, numOfThisDevCard);
       }
-      playerFullResourceCards[i] = new int[5];
+      playerDevelopmentCards[i] = new int[5];
       for (int j = 0; j < playerFullResourceCards[i].length; j++) {
-        playerFullResourceCards[i][j] = numCards.get(DevelopmentCard.valueOf(j));
+        playerDevelopmentCards[i][j] = numCards.get(DevelopmentCard.valueOf(j));
       }
     }
   }
