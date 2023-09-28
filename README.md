@@ -1,4 +1,6 @@
+<img src="readme-files/catan-ai-logo.png" width=200></img>
 # Catan AI - ML of the Java Edition
+
 A Multi-Agent PPO Reinforcement Learning Model, featuring Java 11 + PyTorch 2.0.1 with CUDA 11.7 (see `ai/`), built for the base-game of [Catan](https://www.catan.com/).
 In addition, a React UI is provided in the `app/` folder for viewing previous games (other views are currently WIP), and the `database/` folder contains the information from a Docker container with PostgreSQL for storing all the GameStates.
 
