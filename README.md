@@ -4,6 +4,27 @@ In addition, a React UI is provided in the `app/` folder for viewing previous ga
 
 The game environment was written in Java (originally, the plan was to write everything in Java, but the DeepJava library did not contain some modules I required). Therefore, I pivoted to using WebSockets with SpringBoot to communicate with a PyTorch AI, as the project was already setup with SpringBoot for the React game viewer.
 
+## Table of Contents
+- [Catan AI - ML of the Java Edition](#catan-ai---ml-of-the-java-edition)
+  * [Getting Started](#getting-started)
+  * [Environment (aka Game Engine) Information](#environment--aka-game-engine--information)
+    + [Java `src` Directory Structure](#java--src--directory-structure)
+  * [Game Information & Explanation](#game-information---explanation)
+    + [Catan Board](#catan-board)
+      - [Nodes:](#nodes-)
+      - [Edges:](#edges-)
+      - [Tiles:](#tiles-)
+    + [Players](#players)
+    + [Game Loop](#game-loop)
+    + [Actions and Action Executors](#actions-and-action-executors)
+    + [Action State & Action State Machine](#action-state---action-state-machine)
+    + [GameStates](#gamestates)
+    + [Banks](#banks)
+  * [Other Information](#other-information)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
+
 ## Getting Started
 
 *Note: Currently only working on Linux Distribtions.*
