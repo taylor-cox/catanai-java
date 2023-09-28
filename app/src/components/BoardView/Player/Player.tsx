@@ -66,7 +66,7 @@ const Player: React.FC<PlayerProps> = (playerProps) => {
     backgroundColor: '',
     borderRadius: '0.5rem',
   };
-  if (playerProps.currentTurn) {
+  if (gameStates[currentGameState]?.currentPlayer === parseInt(playerID)) {
     playerStyle.backgroundColor = '#dee3fa';
   }
 
