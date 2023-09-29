@@ -122,7 +122,7 @@ The game loop can be summarized as:
 - Attempt to perform that action.
 - Return whether the action was successful or not.
 
-The client is responsible for sending the correct sequence of moves to the Catan game engine.
+The client is responsible for sending a valid sequence of moves to the Catan game engine.
 
 ### Actions and Action Executors
 The list of possible actions in a game of Catan are as follows (in no particular order):
