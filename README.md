@@ -29,7 +29,7 @@ The game environment was written in Java (originally, the plan was to write ever
 
 ## Getting Started
 
-*Note: Currently only working on Linux Distribtions.*
+*Note: Currently WIP.*
 
 Clone this repository, and run:
 
