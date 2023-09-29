@@ -37,7 +37,7 @@ Clone this repository, and run:
 
 ## Environment (aka Game Engine) Information
 The environment is written in Java, with modules including SpringBoot, Jackson, PostgreSQL, Lombok and JUnit.
-Qodana was used for static analysis, and a checkstyle modified from Google's checkstyle was used throughout the project.
+Qodana was used for static analysis, and a checkstyle modified from [Google's checkstyle](https://checkstyle.sourceforge.io/google_style.html) was used throughout the project.
 
 
 Under the package `main.java.com.catanai.server`, you will find all the source code for the project.
