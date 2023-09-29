@@ -1,6 +1,6 @@
 import numpy as np
 from websockets.game_state import GameState
-from ml.fully_connected.fully_connected_ppo import FullyConnectedAgent
+from ml.ppo.fully_connected.fully_connected_ppo import FullyConnectedPPOAgent
 from dao.dao import GameStateDAO
 from websockets.game_response_parser import GameResponseParser
 from websockets.game_websockets import GameWebSocketHandler
@@ -28,7 +28,7 @@ class AgentTrainer:
         self.starting_turn_counter: int = 0
         self.player_id: str = player_id
 
-        self.agent = FullyConnectedAgent(
+        self.agent = FullyConnectedPPOAgent(
             n_actions=11,
             batch_size=self.batch_size,
             alpha=self.alpha,

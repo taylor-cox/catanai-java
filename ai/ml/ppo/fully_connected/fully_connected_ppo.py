@@ -140,7 +140,7 @@ class FullyConnectedCriticNetwork(nn.Module):
     except:
       print("No checkpoint found (critic). Creating new model...")
 
-class FullyConnectedAgent:
+class FullyConnectedPPOAgent:
   def __init__(
       self, 
       n_actions: int,
