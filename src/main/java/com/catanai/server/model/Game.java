@@ -196,7 +196,7 @@ public final class Game {
         return;
       }
       resources.forEach((player, terrainMap) -> {
-        if (terrainMap.get(terrain).equals(amount)) {
+        if (terrainMap.get(terrain) != null && terrainMap.get(terrain) <= amount) {
           return;
         }
       });
