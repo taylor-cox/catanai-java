@@ -191,6 +191,9 @@ Although WebSockets allow for "real-time" communication, it must be true that ha
 
 ## Other Information
 To read more information about the UI, refer to the `README` in `app/`. *WIP*
+
 For more information about the AI, refer to the `README` in `ai/`. *WIP*
+
 For more information about the database, refer to the `README` in `database/`. *WIP*
+
 I used VSCode to develop this project. It handled Java surprisingly well.
