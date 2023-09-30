@@ -4,10 +4,11 @@
 A Multi-Agent PPO Reinforcement Learning Model, featuring Java 11 + PyTorch 2.0.1 with CUDA 11.7 (see `ai/`), built for the base-game of [Catan](https://www.catan.com/).
 In addition, a React UI is provided in the `app/` folder for viewing previous games (other views are currently WIP), and the `database/` folder contains the information from a Docker container with PostgreSQL for storing all the GameStates.
 
-The game environment was written in Java (originally, the plan was to write everything in Java, but the DeepJava library did not contain some modules I required). Therefore, I pivoted to using WebSockets with SpringBoot to communicate with a PyTorch AI, as the project was already setup with SpringBoot for the React game viewer.
+The game environment was written in Java (originally, the plan was to write everything in Java, but the [DeepJavaLibrary](https://docs.djl.ai/) did not contain some modules I required). Therefore, I pivoted to using WebSockets with SpringBoot to communicate with a PyTorch AI, as the project was already set up as a SpringBoot REST API for the React game viewer.
 
 ## Table of Contents
 - [Catan AI - ML of the Java Edition](#catan-ai---ml-of-the-java-edition)
+  * [Table of Contents](#table-of-contents)
   * [Getting Started](#getting-started)
   * [Environment (aka Game Engine) Information](#environment--aka-game-engine--information)
     + [Java `src` Directory Structure](#java--src--directory-structure)
@@ -22,10 +23,12 @@ The game environment was written in Java (originally, the plan was to write ever
     + [Action State & Action State Machine](#action-state---action-state-machine)
     + [GameStates](#gamestates)
     + [Banks](#banks)
+    + [A Note on WebSocket Communication](#a-note-on-websocket-communication)
+      - [Message Structure](#message-structure)
+      - ["Real-Time"](#-real-time-)
   * [Other Information](#other-information)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
-
 
 ## Getting Started
 
@@ -36,7 +39,7 @@ Clone this repository, and run:
 `sudo ./start.sh`
 
 ## Environment (aka Game Engine) Information
-The environment is written in Java, with modules including SpringBoot, Jackson, PostgreSQL, Lombok and JUnit.
+The environment is written in Java, with modules including SpringBoot, Jackson, PostgreSQL, Lombok, and JUnit.
 Qodana was used for static analysis, and a checkstyle modified from [Google's checkstyle](https://checkstyle.sourceforge.io/google_style.html) was used throughout the project.
 
 
@@ -110,10 +113,10 @@ In total, there are 54 nodes, 72 edges and 19 tiles on any given Catan board. Th
 ![edges labeled](readme-files/nodes-edges%20labeled/edges-labeled.jpeg)
 
 #### Tiles:
-Tiles are indexed from the top left to the bottom right tile of the board, left to right, row by row.
+Tiles are indexed from the top left to the bottom right tile of the board, left to right, row by row. <!-- TODO: Add tile indexes here -->
 
 ### Players
-All players are Deterministic according to the Java environment. In this way, the moves each player attempts are stored in a local queue. Then, their moves are dequeued when the Catan environment asks the player to make a move on the environment. More information can be found below in [game loop](#game-loop). In addition, players are given 2 different `ResourceCard` maps: one pertaining to what cards others can view from *their* perspective, and one containing the full amounts of their resource cards. This mimics players counting cards in a Catan game to play optimally and know in general what cards a player may be seeking during a trade.
+All players are Deterministic according to the Java environment. In this way, the moves each player attempts are stored in a local queue. Then, their moves are dequeued when the Catan environment asks the player to make a move on the environment. More information can be found below in [game loop](#game-loop). In addition, players are given 2 different `ResourceCard` maps: one pertaining to what cards others can view from their perspective, and one containing the full amounts of their resource cards. This mimics players counting cards in a Catan game to play optimally and know in general what cards a player may be seeking during a trade.
 
 ### Game Loop
 The game loop can be summarized as:
@@ -122,7 +125,7 @@ The game loop can be summarized as:
 - Attempt to perform that action.
 - Return whether the action was successful or not.
 
-The client is responsible for sending a valid sequence of moves to the Catan game engine.
+The client (currently, only the AI) is responsible for sending a valid sequence of moves to the Catan game engine. In addition, the Python client logs all the `GameState`s to the database, since the majority of the logic for playing the Catan game is contained in the AI.
 
 ### Actions and Action Executors
 The list of possible actions in a game of Catan are as follows (in no particular order):
@@ -150,7 +153,7 @@ The list of possible actions in a game of Catan are as follows (in no particular
 
 Since each of these actions may need to be executed at a given timestep in the game, a map between the enum `Action` (containing all possible actions) and the `ActionExecutor` for each action was created. Following that, each action executor was populated with the logic pertaining to each action. Each `ActionExecutor` is given the `Player` who is attempting to execute the action, and the `ActionMetadata` pertaining to the action.
 
-**Example**: In order to draw a development card, a `Player` must have an ore, wheat and sheep resource in their hand, which are removed subsequently after drawing the card.
+**Example**: In order to draw a development card, a `Player` must have an ore, wheat, and sheep resource in their hand, which are removed subsequently after drawing the card.
 
 ### Action State & Action State Machine
 At a given timestep in a `Game`, the `Game` can inhibit something I refer to as an `ActionState`: a state which determines which set of `Action`s is possible. 
@@ -169,8 +172,25 @@ Required for a PPO AI is an observation of the state prior to doing an action, a
 ### Banks
 There are 5 `ResourceCard` banks with 19 cards each and 1 `DevelopmentCard` bank with 25 cards in the game of Catan. These are handled by the `Dealer` class, and giving resources / taking resources from the banks all go through this `Dealer` class first, since there are some scenarios where no cards can be taken even if a number is rolled corresponding to a `TerrainChit`.
 
+### A Note on WebSocket Communication
+#### Message Structure
+I haven't been able to find a library or agreed-upon set of standards for message structure using WebSockets. Because of this, I have defaulted to JSON, having the fields described below:
+
+```
+{
+ 'command': 'newGame' | 'getCurrentGameState' | 'makeMove' | 'addMove',
+ 'action'?: int[11], # Containing action + action metadata, only populated when command 'addMove' is present 
+ 'playerID'?: String # Only populated when 'addMove' is present
+}
+```
+
+Each message is then deserialized by the `GameSocketHandler` and passed to the `SocketCommandHandler`. Therefore, if attempting to change entries in the message, both `GameSocketHandler` and `SocketCommandHandler` need to be updated manually as well to accommodate the new structure of the message. This seems unideal; I am open to feedback on how to improve this.
+
+#### "Real-Time"
+Although WebSockets allow for "real-time" communication, it must be true that having an integrated AI agent would reduce the overhead of sending/receiving to and from the server. This is originally why I chose the DeepJavaLibrary; however, while the library is useful to load and use AI agents, it seemed to have limited or overly complicated model training capabilities, at least with my limited research. In addition, many of the algorithms used for deep learning are easily found in Python. For this project, it didn't seem efficient to attempt to relearn how to train models; however, adding the capability to bring pre-trained AI models directly into Java would be an interesting feature to explore in the future.
+
 ## Other Information
-To read more information about the UI, refer to the `README` in `app/`.
-For more information about the AI, refer to the `README` in `ai/`.
-For more information about the database, refer to the `README` in `database/`.
-I used VSCode to develop this whole project. It handled Java surprisingly well.
+To read more information about the UI, refer to the `README` in `app/`. *WIP*
+For more information about the AI, refer to the `README` in `ai/`. *WIP*
+For more information about the database, refer to the `README` in `database/`. *WIP*
+I used VSCode to develop this project. It handled Java surprisingly well.
