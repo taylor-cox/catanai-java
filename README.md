@@ -184,7 +184,7 @@ I haven't been able to find a library or agreed-upon set of standards for messag
 }
 ```
 
-Each message is then deserialized by the `GameSocketHandler` and passed to the `SocketCommandHandler`. Therefore, if attempting to change entries in the message, both `GameSocketHandler` and `SocketCommandHandler` need to be updated manually as well to accommodate the new structure of the message. This seems unideal; I am open to feedback on how to improve this.
+Each message is then deserialized by the `GameSocketHandler` and passed to the `SocketCommandHandler`. Therefore, if attempting to change entries in the message, both `GameSocketHandler` and `SocketCommandHandler` need to be updated manually as well to accommodate the new structure of the message, and vice-versa. This seems unideal; I am open to feedback on how to improve this.
 
 #### "Real-Time"
 Although WebSockets allow for "real-time" communication, it must be true that having an integrated AI agent would reduce the overhead of sending/receiving to and from the server. This is originally why I chose the DeepJavaLibrary; however, while the library is useful to load and use AI agents, it seemed to have limited or overly complicated model training capabilities, at least with my limited research. In addition, many of the algorithms used for deep learning are easily found in Python. For this project, it didn't seem efficient to attempt to relearn how to train models; however, adding the capability to bring pre-trained AI models directly into Java would be an interesting feature to explore in the future.
