@@ -167,7 +167,7 @@ By modeling these actions as a [state machine](https://www.itemis.com/en/product
 ![state machine diagram](readme-files/action-state-machine.jpeg)
 
 ### GameStates
-Required for a PPO AI is an observation of the state prior to doing an action, and an observation of the state after doing an action. The `GameState` class ensures all possible values in a game of Catan are given, such that the `Game` can be reconstructed at a later time (or passed as an observation to the PPO model). `GameState` is serialized into JSON values using the `toMap` method.
+Required for a PPO AI is an observation of the state prior to doing an action, and an observation of the state after doing an action. The `GameState` class ensures all possible values in a game of Catan are given, such that the `Game` can be reconstructed at a later time (or passed as an observation to the PPO model, although all values in `GameState` are not required). `GameState` is serialized into JSON values using the `toMap` method.
 
 ### Banks
 There are 5 `ResourceCard` banks with 19 cards each and 1 `DevelopmentCard` bank with 25 cards in the game of Catan. These are handled by the `Dealer` class, and giving resources / taking resources from the banks all go through this `Dealer` class first, since there are some scenarios where no cards can be taken even if a number is rolled corresponding to a `TerrainChit`.
