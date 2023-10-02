@@ -16,12 +16,13 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 @Component
 public class GameSocketHandler extends TextWebSocketHandler {
   List<WebSocketSession> sessions = new CopyOnWriteArrayList<>();
-  private static SocketCommandHandler commandHandler = new SocketCommandHandler();
+  Map<String, SocketCommandHandler> sessionCommandHandlerMap = Map.of();
 
 
   @Override
   public void handleTextMessage(WebSocketSession session, TextMessage message)
       throws InterruptedException, IOException {
+    SocketCommandHandler commandHandler = sessionCommandHandlerMap.get(session.getId());
     var value = new Gson().fromJson(message.getPayload(), Map.class);
     String command = value.get("command").toString();
     String action = value.get("action") == null ? null : value.get("action").toString();
@@ -32,5 +33,6 @@ public class GameSocketHandler extends TextWebSocketHandler {
   @Override
   public void afterConnectionEstablished(WebSocketSession session) throws Exception {
     sessions.add(session);
+    sessionCommandHandlerMap.put(session.getId(), new SocketCommandHandler());
   }
 }
