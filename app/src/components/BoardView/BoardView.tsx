@@ -9,6 +9,7 @@ import { useDispatch } from "react-redux";
 import { setGameStates } from "../../features/gameStateSlice";
 import { setCurrentGameState } from "../../features/currentGameState";
 import { useAppSelector } from "../../hooks";
+import { bindKey } from "@rwh/keystrokes";
 
 const CANVAS_WIDTH = 850;
 const CANVAS_HEIGHT = 850;
@@ -19,7 +20,7 @@ interface Tile {
   y: number;
 }
 
-// I could not give a crap about getting this the correct way from the server at this point
+// I could not give a carp about getting this the correct way from the server at this point
 let nodeEdgeMapping: number[][] = [
   [1, 2],
   [3, 4],
@@ -126,7 +127,7 @@ const Board: React.FC = () => {
     }
   };
 
-  const newGameID = (e: any) => {
+  const newGameID = (_: any) => {
     catanapi.getGameByID(gameID).then((resp) => {
       const jsonData = resp.data as catanapi.IGameState[];
       dispatch(setGameStates(jsonData));
@@ -142,23 +143,25 @@ const Board: React.FC = () => {
       dispatch(setCurrentGameState(0));
       drawBoard(jsonData[0], canvasRef);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const reduceCurrentGameState = (e: any) => {
+    console.log("decreasing: " + currentGameState.value);
     if (currentGameState.value === 0) return;
     dispatch(setCurrentGameState(currentGameState.value - 1));
     drawBoard(gameStates[currentGameState.value - 1], canvasRef);
   };
 
   const increaseCurrentGameState = (e: any) => {
+    console.log("increasing: " + currentGameState.value);
     if (currentGameState.value === gameStates.length - 1) return;
     dispatch(setCurrentGameState(currentGameState.value + 1));
     drawBoard(gameStates[currentGameState.value + 1], canvasRef);
   };
 
-  // useEffect(() => {
-  //   nodes = drawBoard(gameStates[currentGameState.value], canvasRef);
-  // }, [dispatch]);
+  bindKey("ArrowLeft", reduceCurrentGameState);
+  bindKey("ArrowRight", increaseCurrentGameState);
 
   return (
     <div id="board-container">
@@ -372,7 +375,7 @@ function drawBoard(
         ctx.arc(tile["x"], tile["y"], 13, 0, 2 * Math.PI);
         ctx.fill();
       }
-      if (board.tiles[index][1] == 6 || board.tiles[index][1] == 8) {
+      if (board.tiles[index][1] === 6 || board.tiles[index][1] === 8) {
         ctx.fillStyle = "#ff0000";
       } else {
         ctx.fillStyle = "#000000";
