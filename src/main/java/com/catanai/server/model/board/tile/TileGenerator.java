@@ -5,8 +5,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.Scanner;
-import java.util.stream.Collectors;
 
 /**
 * Generates a randomized set of tiles for a catan game.
@@ -27,23 +25,10 @@ public final class TileGenerator {
     List<Terrain> terrains = this.getShuffledTerrainList();
     List<TerrainChit> terrainChits = this.getTerrainChitList();
 
-    // Get the index of the desert.
-    int desertIndex = terrains.indexOf(Terrain.DESERT);
-
-    // Booleans if the desert is in the outer ring, inner ring or middle.
-    boolean desertInOuterRing = false;
-    boolean desertInInnerRing = false;
-    boolean desertInMiddle = false;
-
     // Initialize the indexes of the inner ring, outer ring and middle.
     List<Integer> outerRing = Arrays.asList(new Integer[] { 0, 1, 2, 6, 11, 15, 18, 17, 16, 12, 7, 3 });
     List<Integer> innerRing = Arrays.asList(new Integer[] { 4, 5, 10, 14, 13, 8 });
     int middle = 9;
-
-    // Check if the desert is in the outer ring, inner ring or middle.
-    desertInOuterRing = outerRing.contains(desertIndex);
-    desertInInnerRing = innerRing.contains(desertIndex);
-    desertInMiddle = desertIndex == middle;
 
     // Check where to start terrain chit placement.
     Random rand = new Random();
