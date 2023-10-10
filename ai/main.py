@@ -1,4 +1,4 @@
-from game_trainer import GameTrainer
+from agent_trainer.game_trainer import GameTrainer
 from pyinstrument import Profiler
 
 PROFILING: bool = False

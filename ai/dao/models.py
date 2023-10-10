@@ -1,7 +1,8 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, ARRAY, BigInteger, SmallInteger, Float
+from sqlalchemy import Column, ARRAY, BigInteger, SmallInteger, Float, Text
 
 Base = declarative_base()
+
 
 class GameState(Base):
     __tablename__ = "gamestates"
@@ -23,6 +24,9 @@ class GameState(Base):
     numAttemptedActionsBeforeSuccessful = Column(BigInteger)
     reward = Column(Float)
     actionMetadata = Column(ARRAY(SmallInteger))
+    robberIndex = Column(SmallInteger)
+    agent = Column(Text)
+    actionStateID = Column(SmallInteger)
 
     def __repr__(self):
         return f"<GameState(id='{self.id})>"
