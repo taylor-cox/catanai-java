@@ -58,4 +58,8 @@ export namespace catanapi {
   export function getRowIDsOfFirstTurnInAllGames(): Promise<AxiosResponse<[{id: number}], any>> {
     return axios.get<[{id: number}]>(`${API_NETWORK_LOCATION}/firstTurnRowIDs`);
   }
+
+  export function getMaxGameID(): Promise<AxiosResponse<[{max: number}], any>> {
+    return axios.get<[{max: number}]>(`${API_NETWORK_LOCATION}/firstTurnRowIDs`);
+  }
 };
