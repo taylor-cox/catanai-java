@@ -32,6 +32,7 @@ build/
 ### VS Code ###
 .vscode/
 code-workspace.code-workspace
+/java-workspace.code-workspace
 
 ### NPM ###
 node_modules/
@@ -44,6 +45,5 @@ tmp/
 ### Examples ###
 ai/main_test.py
 ai/ppo_torch.py
-/java-workspace.code-workspace
 /qodana.yaml
 ai/game_trainer.log
