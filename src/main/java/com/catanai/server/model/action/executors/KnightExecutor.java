@@ -50,11 +50,11 @@ public class KnightExecutor implements SpecificActionExecutor {
 
     // Validate player to steal from.
     int tileIndex = amd.getRelevantMetadata()[0];
-    PlayerID playerIDToStealFrom = PlayerID.valueOf(playerIDToStealFromInt);
-    if (playerIDToStealFrom == null && this.game.getBoard().placeRobber(tileIndex)) {
-      return true;
+    if (playerIDToStealFromInt == 0) {
+      return this.game.getBoard().placeRobber(tileIndex);
     }
-    Player playerToStealFrom = this.game.getPlayerByID(playerIDToStealFrom);
+
+    Player playerToStealFrom = this.game.getPlayers().get(playerIDToStealFromInt);
 
     // Get nodes next to the tile
     List<Node> nodesOnTileWithBuildingsFromPlayerToStealFrom = 
