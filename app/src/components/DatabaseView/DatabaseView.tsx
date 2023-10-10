@@ -26,12 +26,18 @@ const columns: ColumnsType<DataType> = [
 const DatabaseView: React.FC = () => {
   const expandedRowRender = () => {
     // Need to request the game states from the server.
-    const columns = [{ title: "" }];
+    // const columns = [{ title: "" }];
     return <p>Test</p>;
   };
+  const data: DataType[] = [];
+
   return (
     <div id="database-view">
-      <Table columns={columns} expandable={{ expandedRowRender }} />
+      <Table
+        columns={columns}
+        expandable={{ expandedRowRender }}
+        dataSource={data}
+      />
     </div>
   );
 };
