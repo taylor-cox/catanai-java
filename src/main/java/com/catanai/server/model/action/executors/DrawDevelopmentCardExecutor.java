@@ -42,6 +42,11 @@ public class DrawDevelopmentCardExecutor implements SpecificActionExecutor {
 
     // Draw a development card.
     p.addDevelopmentCard(this.game.getDealer().drawDevelopmentCard());
+
+    // Remove resources for development card from player's hand.
+    p.removeAmountOfResourceCardFromHand(ResourceCard.ORE, 1);
+    p.removeAmountOfResourceCardFromHand(ResourceCard.GRAIN, 1);
+    p.removeAmountOfResourceCardFromHand(ResourceCard.WOOL, 1);
     return true;
   }
 }
