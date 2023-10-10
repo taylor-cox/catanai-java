@@ -39,6 +39,7 @@ export namespace catanapi {
     actionID: number,
     numAttemptedActionsBeforeSuccessful: number,
     reward: number,
+    robberIndex: number,
   }
 
   // TODO: Remove testing function
