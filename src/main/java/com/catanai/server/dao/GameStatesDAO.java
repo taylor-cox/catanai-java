@@ -42,4 +42,17 @@ public class GameStatesDAO {
         new ColumnRawMapper()
     );
   }
+
+  /**
+   * Get all starting turns row IDs of all games from the database.
+   *
+   * @return list of row IDs
+   */
+  public List<Map<String, Object>> getRowIDsOfFirstTurnInAllGames() {
+    String sql = "SELECT MIN(id) AS id FROM games.gamestates WHERE game_id != 0 GROUP BY game_id ORDER BY id;";
+    return jdbcTemplate.query(
+        sql,
+        new ColumnRawMapper()
+    );
+  }
 }

@@ -125,4 +125,15 @@ public class GameStateController {
   public List<Map<String, Object>> game(@RequestParam("gameId") int id) {
     return gameStatesDAO.getGameStates(id);
   }
+
+  /**
+   * Returns the row ids representing the first turns in all database Catan games.
+   *
+   * @return row ids representing the first turns in all database Catan games.
+   */
+  @GetMapping(path = "firstTurnRowIDs", produces = MediaType.APPLICATION_JSON_VALUE)
+  @ResponseBody
+  public List<Map<String, Object>> firstTurnRowIDs() {
+    return gameStatesDAO.getRowIDsOfFirstTurnInAllGames();
+  }
 }
