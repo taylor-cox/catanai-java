@@ -54,4 +54,8 @@ export namespace catanapi {
   export function getGameByID(gameID: number): Promise<AxiosResponse<IGameState[], any>> {
     return axios.get<IGameState[]>(`${API_NETWORK_LOCATION}/game?gameId=${gameID}`);
   }
+
+  export function getRowIDsOfFirstTurnInAllGames(): Promise<AxiosResponse<[{id: number}], any>> {
+    return axios.get<[{id: number}]>(`${API_NETWORK_LOCATION}/firstTurnRowIDs`);
+  }
 };
