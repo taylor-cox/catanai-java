@@ -401,6 +401,7 @@ public final class GameState {
         "actionState",
         new int[][] {{this.game.getActionExecutor().getActionStateMachine().getCurrentActionState().getValue()}}
     );
+    map.put("robberIndex", new int[][] {{this.game.getBoard().getTileIndexCurrentlyBlocked()}});
     
     return map;
   }
