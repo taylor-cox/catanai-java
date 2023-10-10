@@ -1,9 +1,12 @@
 package com.catanai.server.model.board.tile;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.Scanner;
+import java.util.stream.Collectors;
 
 /**
 * Generates a randomized set of tiles for a catan game.
@@ -18,34 +21,79 @@ public final class TileGenerator {
   */
   public List<Tile> getRandomizedTiles() {
     List<Tile> tiles = new ArrayList<Tile>(numTiles);
+    for (int i = 0; i < numTiles; i++) {
+      tiles.add(null);
+    }
     List<Terrain> terrains = this.getShuffledTerrainList();
     List<TerrainChit> terrainChits = this.getTerrainChitList();
-    
-    assert terrainChits.size() == terrains.size() - 1 : 
-      "Terrains does not match terrains chit size. Cannot instantiate.";
-    
-    // 50% chance to reverse the direction of the terrain.
+
+    // Get the index of the desert.
+    int desertIndex = terrains.indexOf(Terrain.DESERT);
+
+    // Booleans if the desert is in the outer ring, inner ring or middle.
+    boolean desertInOuterRing = false;
+    boolean desertInInnerRing = false;
+    boolean desertInMiddle = false;
+
+    // Initialize the indexes of the inner ring, outer ring and middle.
+    List<Integer> outerRing = Arrays.asList(new Integer[] { 0, 1, 2, 6, 11, 15, 18, 17, 16, 12, 7, 3 });
+    List<Integer> innerRing = Arrays.asList(new Integer[] { 4, 5, 10, 14, 13, 8 });
+    int middle = 9;
+
+    // Check if the desert is in the outer ring, inner ring or middle.
+    desertInOuterRing = outerRing.contains(desertIndex);
+    desertInInnerRing = innerRing.contains(desertIndex);
+    desertInMiddle = desertIndex == middle;
+
+    // Check where to start terrain chit placement.
     Random rand = new Random();
-    boolean reversed = rand.nextInt(2) == 1;
-    
-    // Reverse direction of terrain if needed.
-    if (reversed) {
-      terrainChits = this.reverseTerrainChitPlacement(terrainChits);
-    }
-    
-    // Randomly rotate terrain chits around the board.
-    terrainChits = this.randomlyRotateTerrainChits(terrainChits);
-    
-    // Add tiles to list and return.
-    for (Terrain t : terrains) {
-      if (t == Terrain.DESERT) {
-        Tile toAdd = new Tile(t, TerrainChit.NONE);
-        tiles.add(toAdd);
-        continue;
+    int start = rand.nextInt(6);
+    System.out.println(start);
+    // Rotate the inner and outer rings to the correct starting position.
+    Collections.rotate(outerRing, start * 2);
+    Collections.rotate(innerRing, start);
+
+
+    // 50% chance to reverse the direction of the terrain chits.
+    if (rand.nextInt(2) == 1) {
+      for (int i = 1; i < outerRing.size() / 2; i++) {
+        int temp = outerRing.get(i);
+        outerRing.set(i, outerRing.get(outerRing.size() - i));
+        outerRing.set(outerRing.size() - i, temp);
       }
-      Tile toAdd = new Tile(t, terrainChits.get(0));
-      terrainChits.remove(0);
-      tiles.add(toAdd);
+      for (int i = 1; i < innerRing.size() / 2; i++) {
+        int temp = innerRing.get(i);
+        innerRing.set(i, innerRing.get(innerRing.size() - i));
+        innerRing.set(innerRing.size() - i, temp);
+      }
+    }
+
+    // Handle outer ring.
+    for (Integer index : outerRing) {
+      Terrain attemptingToAdd = terrains.remove(0);
+      if (attemptingToAdd == Terrain.DESERT) {
+        tiles.set(index, new Tile(Terrain.DESERT, TerrainChit.NONE));
+      } else {
+        tiles.set(index, new Tile(attemptingToAdd, terrainChits.remove(0)));
+      }
+    }
+
+    // Handle inner ring.
+    for (Integer index : innerRing) {
+      Terrain attemptingToAdd = terrains.remove(0);
+      if (attemptingToAdd == Terrain.DESERT) {
+        tiles.set(index, new Tile(Terrain.DESERT, TerrainChit.NONE));
+      } else {
+        tiles.set(index, new Tile(attemptingToAdd, terrainChits.remove(0)));
+      }
+    }
+
+    // Handle middle.
+    Terrain attemptingToAdd = terrains.remove(0);
+    if (attemptingToAdd == Terrain.DESERT) {
+      tiles.set(middle, new Tile(Terrain.DESERT, TerrainChit.NONE));
+    } else {
+      tiles.set(middle, new Tile(attemptingToAdd, terrainChits.remove(0)));
     }
     
     // Sanity check.
@@ -53,54 +101,6 @@ public final class TileGenerator {
       "The number of tiles does not match how many should be on a Catan board.";
     
     return tiles;
-  }
-  
-  /**
-  * Randomly rotates the given terrain chits hexagonally.
-  *
-  * @param terrainChits terrain chit list to randomly rotate
-  * @return list of randomly rotated terrain chits.
-  */
-  private List<TerrainChit> randomlyRotateTerrainChits(List<TerrainChit> terrainChits) {
-    // Generate lists representing "outer" and "inner" edges of board.
-    List<TerrainChit> outerEdge = terrainChits.subList(0, 12);
-    List<TerrainChit> innerEdge = terrainChits.subList(12, 18);
-    
-    // Get a random rotation, between 0-5
-    Random rand = new Random();
-    int rotation = rand.nextInt(6);
-    
-    // Rotate according to the random rotation.
-    Collections.rotate(outerEdge, rotation * 2);
-    Collections.rotate(innerEdge, rotation);
-
-    ArrayList<TerrainChit> randomlyRotatedChits = new ArrayList<TerrainChit>(outerEdge);
-    randomlyRotatedChits.addAll(innerEdge);
-    randomlyRotatedChits.add(terrainChits.get(17));
-    
-    return randomlyRotatedChits;
-  }
-  
-  /**
-  * Returns a hexagonally reversed list of terrain chits.
-  *
-  * @param terrainChits the terrain chits to reverse.
-  * @return hexagonally reversed list of terrain chits.
-  */
-  private List<TerrainChit> reverseTerrainChitPlacement(List<TerrainChit> terrainChits) {
-    ArrayList<TerrainChit> reversedChits = new ArrayList<TerrainChit>();
-    List<TerrainChit> toReverseOuterEdge = terrainChits.subList(1, 12);
-    Collections.reverse(toReverseOuterEdge);
-    List<TerrainChit> toReverseInnerEdge = terrainChits.subList(14, 18);
-    Collections.reverse(toReverseInnerEdge);
-    
-    reversedChits.add(terrainChits.get(0));
-    reversedChits.addAll(toReverseOuterEdge);
-    reversedChits.add(terrainChits.get(13));
-    reversedChits.addAll(toReverseInnerEdge);
-    reversedChits.add(terrainChits.get(17));
-    
-    return reversedChits;
   }
   
   /**
@@ -143,22 +143,22 @@ public final class TileGenerator {
     
     // Add terrain chits in order, starting from one corner.
     terrainChits.add(TerrainChit.FIVE);
-    terrainChits.add(TerrainChit.TWO);
-    terrainChits.add(TerrainChit.SIX);
-    terrainChits.add(TerrainChit.THREE);
     terrainChits.add(TerrainChit.EIGHT);
-    terrainChits.add(TerrainChit.TEN);
-    terrainChits.add(TerrainChit.NINE);
-    terrainChits.add(TerrainChit.TWELVE);
+    terrainChits.add(TerrainChit.FOUR);
     terrainChits.add(TerrainChit.ELEVEN);
-    terrainChits.add(TerrainChit.FOUR);
-    terrainChits.add(TerrainChit.EIGHT);
-    terrainChits.add(TerrainChit.TEN);
+    terrainChits.add(TerrainChit.TWELVE);
     terrainChits.add(TerrainChit.NINE);
-    terrainChits.add(TerrainChit.FOUR);
-    terrainChits.add(TerrainChit.FIVE);
-    terrainChits.add(TerrainChit.SIX);
+    terrainChits.add(TerrainChit.TEN);
+    terrainChits.add(TerrainChit.EIGHT);
     terrainChits.add(TerrainChit.THREE);
+    terrainChits.add(TerrainChit.SIX);
+    terrainChits.add(TerrainChit.TWO);
+    terrainChits.add(TerrainChit.TEN);
+    terrainChits.add(TerrainChit.THREE);
+    terrainChits.add(TerrainChit.SIX);
+    terrainChits.add(TerrainChit.FIVE);
+    terrainChits.add(TerrainChit.FOUR);
+    terrainChits.add(TerrainChit.NINE);
     terrainChits.add(TerrainChit.ELEVEN);
     
     return terrainChits;
