@@ -29,15 +29,12 @@ public class DiscardExecutor implements SpecificActionExecutor {
   private boolean discard(ActionMetadata amd, Player p) {
     int amountOfCardsInHand = p.getAmountOfResourceCardsInHand();
     int[] relevantMetadata = amd.getRelevantMetadata();
-    int amountOfCardsAttemptingToDiscard = 0;
+    int amountOfCardsAttemptingToDiscard = relevantMetadata[0] + relevantMetadata[1]
+        + relevantMetadata[2] + relevantMetadata[3] + relevantMetadata[4];
     int amountOfCardsToDiscard = (int) Math.floor(amountOfCardsInHand / 2.0f);
 
-    // Ensure the player must discard.
-    if (amountOfCardsInHand < 8) {
-      return false;
-    } else if (p.hasDiscardedThisTurn()) {
-      return false;
-    } else if (game.getLastDiceRollValue() != 7) {
+    // Ensure the player is discarding the correct amount of cards.
+    if (amountOfCardsAttemptingToDiscard != amountOfCardsToDiscard) {
       return false;
     }
 
@@ -47,12 +44,6 @@ public class DiscardExecutor implements SpecificActionExecutor {
       if (!p.hasAmountOfResourceInHand(card, relevantMetadata[i])) {
         return false;
       }
-      amountOfCardsAttemptingToDiscard += relevantMetadata[i];
-    }
-
-    // Ensure the player is discarding the correct amount of cards.
-    if (amountOfCardsAttemptingToDiscard != amountOfCardsToDiscard) {
-      return false;
     }
 
     // Discard the cards.
