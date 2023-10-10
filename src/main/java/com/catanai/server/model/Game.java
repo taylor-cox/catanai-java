@@ -79,7 +79,7 @@ public final class Game {
    * Represents the next turn of the Catan game.
    */
   public boolean nextMove() {
-    ActionMetadata playerAction = new ActionMetadata(currentPlayer.play(this.currentGameState));
+    ActionMetadata playerAction = new ActionMetadata(this.currentPlayer.play(this.currentGameState));
     if (this.actionExecutor.doAction(playerAction, currentPlayer)) {
       this.updateGamestate();
       return true;
