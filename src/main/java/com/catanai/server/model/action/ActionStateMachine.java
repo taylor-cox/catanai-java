@@ -122,16 +122,16 @@ public final class ActionStateMachine {
    * @return the next action state.
    */
   private ActionState handleActionStateDiceRoll() {
-    // If the dice roll is a 7, players must discard and current player must move robber.
-    if (this.game.getLastDiceRollValue() == 7) {
-      if (getPlayersToDiscard()) {
-        return ActionState.MOVE_ROBBER;
-      }
-      return ActionState.DISCARD;
+    // If the dice roll is not a 7, business as usual.
+    if (this.game.getLastDiceRollValue() != 7) {
+      return ActionState.BUSINESS_AS_USUAL;
     }
 
-    // If the dice roll is not a 7, business as usual.
-    return ActionState.BUSINESS_AS_USUAL;
+    // If the dice roll is a 7, players must discard and current player must move robber.
+    if (!getPlayersToDiscard()) {
+      return ActionState.MOVE_ROBBER;
+    }
+    return ActionState.DISCARD;
   }
 
   private boolean getPlayersToDiscard() {
@@ -146,12 +146,13 @@ public final class ActionStateMachine {
     if (playersToDiscard.isEmpty()) {
       this.playersToDiscard = null;
       this.turnPlayer = null;
-      return true;
-    } else {
-      this.turnPlayer = this.game.getCurrentPlayer();
-      this.playersToDiscard = playersToDiscard;
+      return false;
     }
-    return false;
+
+    this.turnPlayer = this.game.getCurrentPlayer();
+    this.playersToDiscard = playersToDiscard;
+    this.game.setCurrentPlayer(playersToDiscard.poll());
+    return true;
   }
 
   /**
@@ -166,9 +167,7 @@ public final class ActionStateMachine {
     // Check if any players have to discard, and if so,
     // make those players discard.
     if (this.playersToDiscard == null) {
-      if (getPlayersToDiscard()) {
-        return ActionState.MOVE_ROBBER;
-      }
+      return ActionState.MOVE_ROBBER;
     }
 
     // Get the next player to discard.
