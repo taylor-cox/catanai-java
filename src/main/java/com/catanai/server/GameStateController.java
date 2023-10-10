@@ -136,4 +136,15 @@ public class GameStateController {
   public List<Map<String, Object>> firstTurnRowIDs() {
     return gameStatesDAO.getRowIDsOfFirstTurnInAllGames();
   }
+
+  /**
+   * Returns the max game id in the database.
+   *
+   * @return max game id in the database.
+   */
+  @GetMapping(path = "maxGameID", produces = MediaType.APPLICATION_JSON_VALUE)
+  @ResponseBody
+  public List<Map<String, Object>> maxGameID() {
+    return gameStatesDAO.getMaxGameID();
+  }
 }

@@ -55,4 +55,12 @@ public class GameStatesDAO {
         new ColumnRawMapper()
     );
   }
+
+  public List<Map<String, Object>> getMaxGameID() {
+    String sql = "SELECT MAX(game_id) FROM games.gamestates;";
+    return jdbcTemplate.query(
+        sql,
+        new ColumnRawMapper()
+    );
+  }
 }
