@@ -7,7 +7,6 @@ import com.catanai.server.model.bank.card.DevelopmentCard;
 import com.catanai.server.model.bank.card.ResourceCard;
 import com.catanai.server.model.board.graph.Node;
 import com.catanai.server.model.player.Player;
-import com.catanai.server.model.player.PlayerID;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
