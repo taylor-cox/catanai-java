@@ -1,15 +1,21 @@
+/** Libraries */
 import React, { useState, useEffect, useRef, FormEventHandler } from "react";
-import "./BoardView.css";
-import { catanapi } from "../../apis/CatanAIAPI";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { Button, Input, Space } from "antd";
+import { useDispatch } from "react-redux";
+import { bindKey } from "@rwh/keystrokes";
+
+/** Other views */
 import Player from "./Player/Player";
 import GameMetadata from "./GameMetadata/GameMetadata";
-import { useDispatch } from "react-redux";
+
+/** For getting gamestates and using them. */
+import { catanapi } from "../../apis/CatanAIAPI";
 import { setGameStates } from "../../features/gameStateSlice";
 import { setCurrentGameState } from "../../features/currentGameState";
 import { useAppSelector } from "../../hooks";
-import { bindKey } from "@rwh/keystrokes";
+import "./BoardView.css";
+import { spawn, Thread, Worker } from "threads";
 
 const CANVAS_WIDTH = 850;
 const CANVAS_HEIGHT = 850;
@@ -20,7 +26,7 @@ interface Tile {
   y: number;
 }
 
-// I could not give a carp about getting this the correct way from the server at this point
+// TODO: Replace with getting this from the server.
 let nodeEdgeMapping: number[][] = [
   [1, 2],
   [3, 4],
@@ -77,6 +83,7 @@ let nodeEdgeMapping: number[][] = [
   [69, 70],
   [71, 72],
 ];
+
 nodeEdgeMapping = nodeEdgeMapping.map((nodeEdges) =>
   nodeEdges.map((nodeEdge) => nodeEdge - 1)
 );
@@ -86,16 +93,11 @@ interface Node {
   y: number;
 }
 
-// interface Edge {
-//   node1: number,
-//   node2: number
-// };
-
 const PLAYER_COLORS = {
-  1: "#ff0000",
-  2: "#1e04c9",
-  3: "#fff700",
-  4: "#ffffff",
+  1: "#ff0000", // Red
+  2: "#1e04c9", // Blue
+  3: "#fff700", // Yellow
+  4: "#ffffff", // White
 };
 
 const TILE_COLORS: string[] = [
@@ -113,7 +115,7 @@ const Board: React.FC = () => {
   const currentGameState = useAppSelector((state) => state.currentGameState);
   const gameStates = useAppSelector((state) => state.gameStates.value);
 
-  const [gameID, setGameID] = useState<number>(0);
+  const [gameID, setGameID] = useState<number>(1);
 
   const gameIdChanged: FormEventHandler<HTMLInputElement> = (event) => {
     let nextGameID = parseInt(event.currentTarget.value);
@@ -168,7 +170,7 @@ const Board: React.FC = () => {
       <div id="input-and-players-col">
         <Space.Compact style={{ width: "100%" }}>
           <Input
-            placeholder="Enter a game ID (0, 1, ...)"
+            placeholder="Enter a game ID (1, 2, ...)"
             onInput={gameIdChanged}
           />
           <Button type="primary" onClick={newGameID}>
