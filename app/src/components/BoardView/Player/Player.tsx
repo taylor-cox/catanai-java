@@ -42,11 +42,18 @@ const pngIconStyle = {
 };
 
 const Player: React.FC<PlayerProps> = (playerProps) => {
-  // TODO: populate with real player information from state.
+  /**
+   * This component displays the current player's information.
+   *
+   * This includes their victory points, buildings left, resources,
+   * development cards, and other metadata such as longest road and
+   * largest army.
+   */
   const currentGameState = useAppSelector(
     (state) => state.currentGameState.value
   );
   const gameStates = useAppSelector((state) => state.gameStates.value);
+
   let isLoading = true;
 
   if (gameStates.length !== 0) {
@@ -54,13 +61,13 @@ const Player: React.FC<PlayerProps> = (playerProps) => {
   }
 
   // Setting background color for player icons
-  let playerIconBackgroundColor = "#d0d0d0";
+  let playerIconBackgroundColor = "#cdcdcd";
   const playerID = playerProps.playerID;
   if (
     playerColors[playerID] === "#ffffff" ||
     playerColors[playerID] === "#fff700"
   ) {
-    playerIconBackgroundColor = "#696969";
+    playerIconBackgroundColor = "#cdcdcd";
   }
 
   // Setting style for player's background (highlight if current turn, etc.)
@@ -294,7 +301,6 @@ const Player: React.FC<PlayerProps> = (playerProps) => {
             </p>
           </div>
         </div>
-
         {/* --------------------- Player Other Metadata -------------------- */}
         <div id="player-other-metadata">
           <p style={{ textDecoration: "underline" }}>Metadata</p>
