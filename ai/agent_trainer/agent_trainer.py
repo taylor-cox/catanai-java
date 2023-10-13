@@ -16,7 +16,6 @@ class AgentTrainer:
         self.memory_size: int = 1_000_000
         self.n_actions: int = 239
         self.input_dims: Tuple[int] = (288,)
-        self.tau = 0.005
 
         # Other metrics
         self.best_score: float = 0.0
