@@ -1,1 +1,1 @@
-./mvnw spring-boot:run & npm start --prefix ./app
+./mvnw spring-boot:run & ./ai/venv/bin/python ./ai/main.py & npm start --prefix ./app
