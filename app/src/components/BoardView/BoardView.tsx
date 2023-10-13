@@ -15,7 +15,7 @@ import { setGameStates } from "../../features/gameStateSlice";
 import { setCurrentGameState } from "../../features/currentGameState";
 import { useAppSelector } from "../../hooks";
 import "./BoardView.css";
-import { spawn, Thread, Worker } from "threads";
+// import { spawn, Thread, Worker } from "threads";
 
 const CANVAS_WIDTH = 850;
 const CANVAS_HEIGHT = 850;
