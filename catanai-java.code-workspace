@@ -1,0 +1,22 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "src/main/java/com/catanai/server"
+		},
+		{
+			"path": "ai"
+		},
+		{
+			"path": "app"
+		}
+	],
+  "settings": {
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "maven.view": "hierarchical",
+    "java.debug.settings.onBuildFailureProceed": true
+  }
+}
