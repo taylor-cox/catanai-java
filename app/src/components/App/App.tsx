@@ -1,10 +1,10 @@
 import React from "react";
 import "./App.css";
-import BoardView from "./components/BoardView/BoardView";
-import Navbar from "./components/Navbar/Navbar";
+import BoardView from "../BoardView/BoardView";
+import Navbar from "../Navbar/Navbar";
 import { NavigateFunction, Route, Routes, useNavigate } from "react-router-dom";
-import { useAppSelector } from "./hooks";
-import DatabaseView from "./components/DatabaseView/DatabaseView";
+import { useAppSelector } from "../../hooks";
+import DatabaseView from "../DatabaseView/DatabaseView";
 
 function App() {
   const page = useAppSelector((state) => state.page);
