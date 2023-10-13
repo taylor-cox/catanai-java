@@ -3,6 +3,13 @@ import "./GameMetadata.css";
 import { useAppSelector } from "../../../hooks";
 
 const GameMetadata: React.FC = () => {
+  /**
+   * This component displays the current game state metadata.
+   *
+   * Metadata includes the current player, the last dice roll,
+   * the current action, and the total number of actions in the
+   * given game.
+   */
   const currentGameState = useAppSelector(
     (state) => state.currentGameState.value
   );
