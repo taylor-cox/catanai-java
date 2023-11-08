@@ -40,5 +40,4 @@ if __name__ == '__main__':
         stop={"timesteps_total": 100000},
         checkpoint_freq=10,
         config=config.to_dict(),
-
     )

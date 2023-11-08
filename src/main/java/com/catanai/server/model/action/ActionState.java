@@ -16,7 +16,10 @@ public enum ActionState {
   ROLL_DICE(5),
   /** If the roll was a 7 and there are players who must discard. */
   DISCARD(6),
-  /** If the roll was a 7 and all players have discarded / no players have to discard. */
+  /**
+   * If the roll was a 7 and all players have discarded / no players have to
+   * discard.
+   */
   MOVE_ROBBER(7),
   TRADE(8),
   /** If any player has 10 or more victory points. */

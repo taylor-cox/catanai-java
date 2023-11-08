@@ -1,18 +1,21 @@
 {
 	"folders": [
-		{
-			"path": "."
-		},
-		{
-			"path": "src/main/java/com/catanai/server"
-		},
-		{
-			"path": "ai"
-		},
-		{
-			"path": "app"
-		}
-	],
+    {
+      "path": "."
+    },
+    {
+      "path": "src/main/java/com/catanai/server"
+    },
+    {
+      "path": "ai"
+    },
+    {
+      "path": "app"
+    },
+    {
+      "path": "src/test/java/com/catanai/server"
+    }
+  ],
   "settings": {
     "java.compile.nullAnalysis.mode": "automatic",
     "java.configuration.updateBuildConfiguration": "automatic",
