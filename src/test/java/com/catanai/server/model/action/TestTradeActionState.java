@@ -1,17 +1,21 @@
 package com.catanai.server.model.action;
 
 import com.catanai.server.model.Game;
+import com.catanai.server.model.bank.card.ResourceCard;
 import com.catanai.server.model.player.DeterministicPlayer;
+import com.catanai.server.model.player.Player;
 import com.catanai.server.model.player.PlayerID;
-import java.util.ArrayList;
-import java.util.List;
-import org.junit.After;
-import org.junit.Before;
 
-/**
- * Tests the action executor.
- */
-public class TestActionExecutor {
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+public class TestTradeActionState {
   private Game game;
   private List<DeterministicPlayer> players;
   private int[][][] startingMoves;
@@ -50,11 +54,34 @@ public class TestActionExecutor {
     this.startingMoves = null;
   }
 
-  // Action State to Test
-  /*
-   * DISCARD(6),
-   * MOVE_ROBBER(7),
-   * TRADE(8),
-   * FINISHED(9);
+  /**
+   * Tests the trading action state.
    */
+  @Test
+  public void testTradeActionState() {
+    // Get through starting turns.
+    for (int i = 0; i < 8; i++) {
+      Assert.assertTrue(this.game.nextMove() && this.game.nextMove()); // Settlement and road.
+    }
+    DeterministicPlayer p = this.players.get(0);
+    p.addNextMove(new int[] { 15, 0 }); // Roll dice.
+    game.nextMove();
+
+    HashMap<Player, ResourceCard> trade = new HashMap<Player, ResourceCard>();
+
+    while (trade.keySet().size() < 2) {
+      for (Player player : game.getPlayers()) {
+        if (player.getAmountOfResourceCardsInHand() > 0) {
+          player.getResourceCards().forEach((k, v) -> {
+            if (v > 0) {
+              trade.put(player, k);
+            }
+          });
+        } else {
+          p.addNextMove(new int[] {});
+        }
+      }
+    }
+
+  }
 }
