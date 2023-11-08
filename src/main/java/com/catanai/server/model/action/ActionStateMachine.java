@@ -63,8 +63,9 @@ public final class ActionStateMachine {
   /**
    * Handles the first road action state.
    * The first road is succeeded by:
-   *  - First settlement, if there are still players who have not played their first settlement yet.
-   *  - Second settlement, if all other players have placed their first settlement.
+   * - First settlement, if there are still players who have not played their
+   * first settlement yet.
+   * - Second settlement, if all other players have placed their first settlement.
    *
    * @return the next action state.
    */
@@ -73,14 +74,15 @@ public final class ActionStateMachine {
     long playersWithFirstStartingSettlement = this.game.getPlayers().stream()
         .filter(p -> p.getFirstStartingSettlement() != null)
         .count();
-    
+
     // If all players have placed their first settlement, the current player plays
     // their second settlement.
     if (playersWithFirstStartingSettlement >= 4) {
       return ActionState.SECOND_SETTLEMENT;
     }
 
-    // Otherwise, update the current player to be the next player, and set the current
+    // Otherwise, update the current player to be the next player, and set the
+    // current
     // action state to the first settlement for that player.
     PlayerID currentPlayerID = this.game.getCurrentPlayer().getID();
     this.game.setCurrentPlayer(this.game.getPlayers().get(currentPlayerID.getValue()));
@@ -90,8 +92,9 @@ public final class ActionStateMachine {
   /**
    * Handles the second road action state.
    * The second road is succeeded by:
-   *  - Second settlement, if there are still players who have not played their second settlement yet.
-   *  - Roll dice, if all other players have placed their second settlement.
+   * - Second settlement, if there are still players who have not played their
+   * second settlement yet.
+   * - Roll dice, if all other players have placed their second settlement.
    *
    * @return the next action state.
    */
@@ -100,13 +103,15 @@ public final class ActionStateMachine {
     long playersWithSecondStartingSettlement = this.game.getPlayers().stream()
         .filter(p -> p.getSecondStartingSettlement() != null)
         .count();
-    
-    // If all players have placed their second settlement, the current player rolls the dice.
+
+    // If all players have placed their second settlement, the current player rolls
+    // the dice.
     if (playersWithSecondStartingSettlement >= 4) {
       return ActionState.ROLL_DICE;
     }
 
-    // Otherwise, update the current player to be the next player, and set the current
+    // Otherwise, update the current player to be the next player, and set the
+    // current
     // action state to the second settlement for that player.
     PlayerID currentPlayerID = this.game.getCurrentPlayer().getID();
     this.game.setCurrentPlayer(this.game.getPlayers().get(currentPlayerID.getValue() - 2));
@@ -116,8 +121,8 @@ public final class ActionStateMachine {
   /**
    * Handles the dice roll action state.
    * The dice roll is succeeded by:
-   *  - Discard, if the dice roll is a 7.
-   *  - Business as usual, if the dice roll is not a 7.
+   * - Discard, if the dice roll is a 7.
+   * - Business as usual, if the dice roll is not a 7.
    *
    * @return the next action state.
    */
@@ -127,7 +132,8 @@ public final class ActionStateMachine {
       return ActionState.BUSINESS_AS_USUAL;
     }
 
-    // If the dice roll is a 7, players must discard and current player must move robber.
+    // If the dice roll is a 7, players must discard and current player must move
+    // robber.
     if (!getPlayersToDiscard()) {
       return ActionState.MOVE_ROBBER;
     }
@@ -158,8 +164,8 @@ public final class ActionStateMachine {
   /**
    * Handles the discard action state.
    * The discard action state is succeeded by:
-   *  - Discard, if there are still players who have not discarded yet.
-   *  - Move robber, if all players who must discard have discarded.
+   * - Discard, if there are still players who have not discarded yet.
+   * - Move robber, if all players who must discard have discarded.
    *
    * @return the next action state.
    */
@@ -174,7 +180,8 @@ public final class ActionStateMachine {
     Player playerToDiscard = this.playersToDiscard.poll();
 
     // If there is a player to discard, require them to discard.
-    // Set the game's current player to that player, and return discard action state.
+    // Set the game's current player to that player, and return discard action
+    // state.
     if (playerToDiscard != null) {
       this.game.setCurrentPlayer(playerToDiscard);
       return ActionState.DISCARD;
@@ -191,9 +198,9 @@ public final class ActionStateMachine {
   /**
    * Handles the business as usual action state.
    * The business as usual action state is succeeded by:
-   *  - Roll dice, if the current player's last action was end turn.
-   *  - Offer trade, if the current player's last action was offer trade.
-   *  - Business as usual, if the current player's last action was anything else. 
+   * - Roll dice, if the current player's last action was end turn.
+   * - Offer trade, if the current player's last action was offer trade.
+   * - Business as usual, if the current player's last action was anything else.
    *
    * @return the next action state.
    */
@@ -210,20 +217,22 @@ public final class ActionStateMachine {
       return ActionState.ROLL_DICE;
     }
 
-    // If the current player's last action was to offer a trade, throw NotImplementedException.
+    // If the current player's last action was to offer a trade, throw
+    // NotImplementedException.
     if (this.game.getCurrentPlayer().getPreviousAction().getAction() == Action.OFFER_TRADE) {
       return ActionState.TRADE;
     }
 
-    // If the current player's last action was anything else, return business as usual.
+    // If the current player's last action was anything else, return business as
+    // usual.
     return ActionState.BUSINESS_AS_USUAL;
   }
 
   /**
    * Handles the trade action state.
    * The trade action state is succeeded by:
-   *  - Trade, if there are still players who have not responded to the trade yet.
-   *  - Business as usual, if all players have responded to the trade.
+   * - Trade, if there are still players who have not responded to the trade yet.
+   * - Business as usual, if all players have responded to the trade.
    *
    * @return next action state.
    */
@@ -255,7 +264,8 @@ public final class ActionStateMachine {
       return ActionState.BUSINESS_AS_USUAL;
     }
 
-    // If there is a player to get trade response from, require them to respond to trade.
+    // If there is a player to get trade response from, require them to respond to
+    // trade.
     // Set the game's current player to that player, and return trade action state.
     if (playerToGetTradeResponse.getID() == this.turnPlayer.getID()) {
       this.game.setCurrentPlayer(this.turnPlayer);
